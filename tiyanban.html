@@ -372,6 +372,17 @@
     .status-bar.error i { background: #c65b45; }
     .status-bar .spacer { flex: 1; }
     .status-bar b { color: var(--ink-soft); font-weight: 700; }
+    .retry-link {
+      border: 0;
+      border-bottom: 1px solid rgba(11, 139, 130, .35);
+      padding: 0 0 1px;
+      background: transparent;
+      color: var(--teal-dark);
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .retry-link:hover { color: var(--teal); }
 
     .load-track { height: 3px; margin-top: 7px; border-radius: 99px; background: #e8f2ee; overflow: hidden; display: none; }
     .load-track.show { display: block; }
@@ -542,6 +553,7 @@
           <i></i>
           <span id="statusText">正在加载本地模型…</span>
           <span class="spacer"></span>
+          <button class="retry-link" id="retryBtn" type="button" hidden>重试加载</button>
           <b id="statusSize">5200 类</b>
         </div>
         <div class="load-track show" id="loadTrack"><i id="loadBar"></i></div>
@@ -618,6 +630,7 @@
       const loadTrack = $('#loadTrack');
       const loadBar = $('#loadBar');
       const recognizeBtn = $('#recognizeBtn');
+      const retryBtn = $('#retryBtn');
       const resultEmpty = $('#resultEmpty');
       const resultReal = $('#resultReal');
       const resultChar = $('#resultChar');
@@ -920,7 +933,7 @@
 
       async function fetchWithProgress(url, onProgress) {
         const res = await fetch(url, { cache: 'force-cache' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) throw new Error('HTTP ' + res.status + ' · ' + url);
         const total = Number(res.headers.get('content-length') || 0);
         if (!res.body) {
           const buf = await res.arrayBuffer();
@@ -955,7 +968,7 @@
 
         // 模型按字节切成多个 <25MB 的分卷，浏览器按顺序拼接后再交给 ORT。
         const mres = await fetch(MODEL_HANZI_PARTS, { cache: 'no-store' });
-        if (!mres.ok) throw new Error('模型清单 HTTP ' + mres.status);
+        if (!mres.ok) throw new Error('模型清单 HTTP ' + mres.status + ' · ' + MODEL_HANZI_PARTS);
         const manifest = await mres.json();
         if (!Array.isArray(manifest.parts) || !manifest.parts.length || !manifest.size) {
           throw new Error('模型清单格式不正确');
@@ -1003,6 +1016,7 @@
       }
 
       async function boot() {
+        retryBtn.hidden = true;
         if (location.protocol === 'file:') {
           setStatus('请通过 GitHub Pages 或本地 HTTP 打开', 'error');
           loadTrack.classList.remove('show');
@@ -1012,6 +1026,7 @@
         if (typeof ort === 'undefined') {
           setStatus('ONNX Runtime 加载失败', 'error');
           loadTrack.classList.remove('show');
+          retryBtn.hidden = false;
           toast('请检查网络后刷新；模型推理组件未能加载');
           return;
         }
@@ -1031,6 +1046,7 @@
           setTimeout(() => loadTrack.classList.remove('show'), 500);
           S.ready = true;
           recognizeBtn.disabled = false;
+          retryBtn.hidden = true;
           S.loading = false;
         } catch (err) {
           console.error(err);
@@ -1039,6 +1055,8 @@
             ? '模型未上传：tiyanban_assets/'
             : '模型加载失败：' + (err.message || '未知错误'), 'error');
           loadTrack.classList.remove('show');
+          recognizeBtn.disabled = false;
+          retryBtn.hidden = false;
           S.loading = false;
           toast(missing
             ? '请把 tiyanban_assets 里的 ONNX 模型一起上传到 GitHub'
@@ -1140,6 +1158,11 @@
       }
 
       recognizeBtn.addEventListener('click', recognize);
+      retryBtn.addEventListener('click', () => {
+        const u = new URL(location.href);
+        u.searchParams.set('v', Date.now().toString());
+        location.replace(u.toString());
+      });
       document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); recognize(); }
       });
