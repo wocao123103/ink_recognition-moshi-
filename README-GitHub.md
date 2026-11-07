@@ -73,11 +73,23 @@ tiyanban_assets/
   ├─ moshi_hanzi_5k.parts.json   # 分卷清单
   ├─ moshi_hanzi_5k.part00.bin   # 约 16.9 MB
   ├─ moshi_hanzi_5k.part01.bin   # 约 16.9 MB
-  ├─ moshi_digit.onnx            # 数字模型
-  └─ charset.json                # 5200 字字符表
+  ├─ moshi_digit.onnx            # 数字模型 1.6 MB（单文件 <25MB，无需拆分）
+  └─ charset.json                # 5200 字字符表 31 KB
 ```
 
 请确保这些文件一起上传到 GitHub 仓库根目录，并且不要被 `.gitignore` 忽略。
+
+**数字模型文件位置：**
+
+```text
+tiyanban_assets/moshi_digit.onnx
+```
+
+大小约 **1,691,163 字节（1.6 MB）**，小于 25MB，**不需要拆分**。`tiyanban.html` 中对应：
+
+```js
+const MODEL_DIGIT = 'tiyanban_assets/moshi_digit.onnx?v=20261108';
+```
 
 > 原始模型约 **35 MB**，已拆成两个约 **16.9 MB** 的分卷，每个都小于 GitHub 网页端 25 MB 的单文件限制。`parts.json` 记录顺序和总大小，`tiyanban.html` 会在浏览器里按顺序拼接成一个 `Uint8Array` 后再加载。
 >
@@ -180,7 +192,45 @@ http://127.0.0.1:18620/
 
 ---
 
-## 7. 说明
+## 7. 识别按钮无法点击 / 显示模型未上传
+
+先确认打开的是**修正后的地址**：
+
+```text
+https://wocao123103.github.io/ink_recognition-moshi-/tiyanban.html?v=20261108
+```
+
+页面底部应显示：
+
+```text
+v2026.11.08 · 分卷模型
+```
+
+如果没有这行版本号，说明浏览器打开的是旧缓存页面：
+
+1. `Ctrl + F5` 强制刷新；
+2. 或使用无痕窗口；
+3. 或打开带 `?v=20261108` 的地址。
+
+新版 `tiyanban.html` 的「识别」按钮**始终可点击**：
+
+- 模型还在加载时点击：提示“本地模型还在加载，请稍候…”；
+- 模型加载失败时点击：提示“模型未就绪，请刷新页面后重试”；
+- 模型就绪后点击：正常识别。
+
+如果仍然显示「模型未上传」，打开浏览器开发者工具 → Network，确认以下请求：
+
+```text
+tiyanban_assets/moshi_hanzi_5k.parts.json       200
+tiyanban_assets/moshi_hanzi_5k.part00.bin       200
+tiyanban_assets/moshi_hanzi_5k.part01.bin       200
+tiyanban_assets/moshi_digit.onnx                200
+tiyanban_assets/charset.json                    200
+```
+
+哪个 404，就说明哪个文件没有上传到对应目录。
+
+## 8. 说明
 
 - 体验版的模型是**打包时的快照**，不会随着本地训练更新；
 - 如果浏览器无法加载模型，请确认是通过 GitHub Pages / HTTP 打开，而不是直接双击 `file://`；

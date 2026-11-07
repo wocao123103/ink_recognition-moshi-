@@ -423,8 +423,9 @@
       font-size: 9.5px;
     }
     .footer b { color: var(--ink-soft); }
-    .footer-links { display: flex; flex-wrap: wrap; gap: 12px; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
     .footer a:hover { color: var(--teal-dark); }
+    .build-tag { color: var(--teal-dark); font-family: var(--mono); font-size: 8.5px; }
 
     .toast {
       position: fixed;
@@ -534,7 +535,7 @@
           <button class="tool-btn" id="undoBtn" type="button">撤销</button>
           <button class="tool-btn" id="clearBtn" type="button">清空</button>
           <span class="spacer"></span>
-          <button class="btn btn-primary recognize-btn" id="recognizeBtn" type="button" disabled>识别</button>
+          <button class="btn btn-primary recognize-btn" id="recognizeBtn" type="button">识别</button>
         </div>
 
         <div class="status-bar" id="statusBar">
@@ -595,6 +596,7 @@
         <a href="index.html">项目介绍</a>
         <a href="https://github.com/wocao123103/ink_recognition-moshi-" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912" target="_blank" rel="noopener noreferrer">下载完整版（8912）</a>
+        <span class="build-tag">v2026.11.08 · 分卷模型</span>
         <span>© <span id="year">2026</span> MOSHI</span>
       </div>
     </footer>
@@ -623,9 +625,10 @@
       const candidates = $('#candidates');
       const padTip = $('#padTip');
 
-      const MODEL_HANZI_PARTS = 'tiyanban_assets/moshi_hanzi_5k.parts.json';
-      const MODEL_DIGIT = 'tiyanban_assets/moshi_digit.onnx';
-      const CHARSET = 'tiyanban_assets/charset.json';
+      const ASSET_VER = '20261108';
+      const MODEL_HANZI_PARTS = `tiyanban_assets/moshi_hanzi_5k.parts.json?v=${ASSET_VER}`;
+      const MODEL_DIGIT = `tiyanban_assets/moshi_digit.onnx?v=${ASSET_VER}`;
+      const CHARSET = `tiyanban_assets/charset.json?v=${ASSET_VER}`;
 
       const S = {
         mode: 'hanzi',
@@ -961,7 +964,7 @@
         const bytes = new Uint8Array(manifest.size);
         let offset = 0;
         for (const part of manifest.parts) {
-          const url = part.url || ('tiyanban_assets/' + part.name);
+          const url = (part.url || ('tiyanban_assets/' + part.name)) + `?v=${ASSET_VER}`;
           const chunk = await fetchWithProgress(url, p => {
             const loaded = offset + p * part.size;
             const pct = Math.min(99, Math.round(loaded / manifest.size * 100));
@@ -1058,12 +1061,10 @@
           hideResult();
           setStatus('本地模型已就绪 · 仅推理', 'ready', mode === 'hanzi' ? '5200 类' : '10 类');
           if (mode === 'digit' && !S.digitSession) {
-            recognizeBtn.disabled = true;
             try {
               setStatus('正在加载数字模型…', '', '10 类');
               await loadDigit();
               setStatus('数字模型已就绪 · 仅推理', 'ready', '10 类');
-              recognizeBtn.disabled = false;
             } catch (err) {
               setStatus('数字模型加载失败', 'error');
               toast('数字模型加载失败，请刷新');
@@ -1093,7 +1094,13 @@
       }
 
       async function recognize() {
-        if (!S.ready || S.busy) return;
+        if (!S.ready) {
+          toast(S.loading ? '本地模型还在加载，请稍候…' : '模型未就绪，请刷新页面后重试');
+          return;
+        }
+        if (S.busy) { toast('正在识别，请稍候…'); return; }
+        if (S.mode === 'hanzi' && !S.hanziSession) { toast('汉字模型未加载'); return; }
+        if (S.mode === 'digit' && !S.digitSession) { toast('数字模型正在加载，请稍候…'); return; }
         const ink = inkCanvas();
         const bbox = bboxOf(ink);
         if (!bbox) { toast('画板是空的，先写一个字'); return; }
