@@ -8,13 +8,25 @@
 
 **仓库**
 
-https://github.com/wocao123103/ink_recognition-moshi
+https://github.com/wocao123103/ink_recognition-moshi-
 
 **GitHub Pages 首页**
 
-https://wocao123103.github.io/ink_recognition-moshi/
+https://wocao123103.github.io/ink_recognition-moshi-/
 
 GitHub Pages 指向仓库根目录的 **`index.html`**。
+
+### 链接链路
+
+```text
+https://wocao123103.github.io/ink_recognition-moshi-/
+        ↓
+index.html
+        ↓ 点击页面里的「网页体验版」
+https://wocao123103.github.io/ink_recognition-moshi-/tiyanban.html
+```
+
+`index.html` 里的 `LINKS.online` 使用相对地址 `tiyanban.html`，所以在 GitHub Pages 的仓库子路径下会正确解析为上面的体验版地址。
 
 ### 开启方式
 
@@ -25,7 +37,7 @@ GitHub Pages 指向仓库根目录的 **`index.html`**。
 5. 访问：
 
 ```text
-https://wocao123103.github.io/ink_recognition-moshi/
+https://wocao123103.github.io/ink_recognition-moshi-/
 ```
 
 > 如果 Pages 域名暂时打不开，可以直接打开仓库，再点根目录的 `index.html` 预览。
@@ -37,7 +49,7 @@ https://wocao123103.github.io/ink_recognition-moshi/
 **入口**
 
 ```text
-https://wocao123103.github.io/ink_recognition-moshi/tiyanban.html
+https://wocao123103.github.io/ink_recognition-moshi-/tiyanban.html
 ```
 
 ![网页体验版](docs/screenshots/tiyanban.png)
@@ -58,7 +70,7 @@ https://wocao123103.github.io/ink_recognition-moshi/tiyanban.html
 ```text
 tiyanban.html
 tiyanban_assets/
-  ├─ moshi_hanzi_5k.onnx      # 约 34 MB，5200 类模型
+  ├─ moshi_hanzi_5k.onnx      # 约 35 MB，5200 类模型
   ├─ moshi_digit.onnx         # 数字模型
   └─ charset.json             # 5200 字字符表
 ```
@@ -68,6 +80,18 @@ tiyanban_assets/
 > `moshi_hanzi_5k.onnx` 约 **35 MB**。GitHub 网页端单文件上传有 25 MB 限制，请用 `git push`、GitHub Desktop 或 GitHub CLI 上传；不要用网页拖拽上传这个大文件。
 >
 > 浏览器推理使用 ONNX Runtime Web（CDN 加载）。第一次打开需要下载约 35 MB 模型；之后由浏览器缓存。
+
+### 上线检查清单
+
+- [ ] `index.html` 在仓库根目录；
+- [ ] `tiyanban.html` 在仓库根目录；
+- [ ] `tiyanban_assets/charset.json` 已上传；
+- [ ] `tiyanban_assets/moshi_hanzi_5k.onnx` 已上传；
+- [ ] `tiyanban_assets/moshi_digit.onnx` 已上传；
+- [ ] Settings → Pages 已选择 `main` / `/ (root)`；
+- [ ] 首页返回 200，再点「网页体验版」能打开 `tiyanban.html`。
+
+如果体验版顶部显示「模型未上传：tiyanban_assets/」，说明页面链接是对的，但 ONNX 文件还没有上传。
 
 ---
 

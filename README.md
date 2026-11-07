@@ -6,6 +6,35 @@
 一个完全在本机运行的汉字 / 数字识别与优化工具：
 **PySide6 桌面显示 + 本地 Web 服务 + 网页内样本管理与微调 + 多模型 AI 交叉复核**。
 
+## 在线入口
+
+GitHub Pages 根地址指向仓库根目录的 **`index.html`**：
+
+```text
+https://wocao123103.github.io/ink_recognition-moshi-/
+        ↓
+index.html
+```
+
+`index.html` 页面里的「网页体验版」再指向 **`tiyanban.html`**：
+
+```text
+https://wocao123103.github.io/ink_recognition-moshi-/
+        ↓
+index.html
+        ↓ 点击「网页体验版」
+https://wocao123103.github.io/ink_recognition-moshi-/tiyanban.html
+```
+
+- 仓库：<https://github.com/wocao123103/ink_recognition-moshi->
+- Pages 首页：<https://wocao123103.github.io/ink_recognition-moshi-/>
+- 网页体验版：<https://wocao123103.github.io/ink_recognition-moshi-/tiyanban.html>
+- 安装包（百度网盘，提取码 `8912`）：<https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912>
+
+> 如果 Pages 地址返回 404，说明仓库还没有公开或 Pages 尚未开启：  
+> Settings → Pages → Deploy from a branch → `main` → `/ (root)`，保存后等待构建完成。  
+> 页面之间的相对链接（`index.html` → `tiyanban.html`）在 Pages 根路径下是正确的。
+
 ![识别界面](docs/screenshots/recognition.png)
 
 ## 交付物

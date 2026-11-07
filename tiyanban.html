@@ -488,7 +488,7 @@
       </a>
       <div class="top-actions">
         <a class="btn btn-ghost hide-mobile" href="index.html">项目介绍</a>
-        <a class="btn btn-ghost hide-mobile" href="https://github.com/wocao123103/ink_recognition-moshi" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <a class="btn btn-ghost hide-mobile" href="https://github.com/wocao123103/ink_recognition-moshi-" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
         <a class="btn btn-primary" href="https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912" target="_blank" rel="noopener noreferrer">完整版 · 提取码 8912</a>
       </div>
     </header>
@@ -593,7 +593,7 @@
       <div><b>墨识</b> · 网页体验版 <span style="color:#a8bbb5">/</span> 模型快照 · 只读推理</div>
       <div class="footer-links">
         <a href="index.html">项目介绍</a>
-        <a href="https://github.com/wocao123103/ink_recognition-moshi" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/wocao123103/ink_recognition-moshi-" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912" target="_blank" rel="noopener noreferrer">下载完整版（8912）</a>
         <span>© <span id="year">2026</span> MOSHI</span>
       </div>
@@ -1005,10 +1005,15 @@
           S.loading = false;
         } catch (err) {
           console.error(err);
-          setStatus('模型加载失败：' + (err.message || '未知错误'), 'error');
+          const missing = /404/.test(err.message || '');
+          setStatus(missing
+            ? '模型未上传：tiyanban_assets/'
+            : '模型加载失败：' + (err.message || '未知错误'), 'error');
           loadTrack.classList.remove('show');
           S.loading = false;
-          toast('模型加载失败，请刷新或检查网络');
+          toast(missing
+            ? '请把 tiyanban_assets 里的 ONNX 模型一起上传到 GitHub'
+            : '模型加载失败，请刷新或检查网络');
         }
       }
 
