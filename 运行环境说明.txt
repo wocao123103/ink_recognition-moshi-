@@ -1,0 +1,51 @@
+墨识手写识别 · 运行环境说明
+================================
+
+本程序需要一个本机 Python 环境（不会上传任何数据）：
+  Python 3.10+
+  torch / torchvision
+  opencv-python
+  numpy
+  PySide6（桌面窗口）
+  Pillow（训练时字体合成，可选）
+
+安装助手会自动检测，并且有 Conda 时优先 Conda：
+  1. 已有 Conda 环境（优先 pytorch、moshi，再其他可用环境）
+  2. runtime\python.txt 中记录的解释器
+  3. D:\Anaconda\envs\pytorch\python.exe
+  4. PATH 中的 python.exe
+  5. 常见 Conda / Python 安装目录
+
+安装界面还可以选择：
+  - 自动（优先 Conda）
+  - 仅使用现有环境
+  - 新建 Conda 环境（默认名 moshi，python 3.11）
+  - 新建 venv（runtime\venv）
+缺少依赖时，自动配置会联网执行：
+  pip install -r requirements.txt
+（torch / torchvision / opencv-python / numpy / PySide6 / Pillow）
+
+如果启动时提示“没有找到 Python / PyTorch”：
+  1. 打开 PowerShell，执行：
+       D:\Anaconda\envs\pytorch\python.exe -c "import torch,cv2,numpy,PySide6;print('OK')"
+  2. 若报 ModuleNotFoundError，安装缺失依赖：
+       D:\Anaconda\envs\pytorch\python.exe -m pip install torch torchvision opencv-python numpy PySide6 Pillow
+  3. 把可用的 pythonw.exe 路径写入：
+       安装目录\runtime\python.txt
+     例如：
+       D:\Anaconda\envs\pytorch\pythonw.exe
+  4. 重新双击桌面「墨识手写识别」。
+
+端口：
+  默认 http://127.0.0.1:18620/
+  若被占用，会自动顺延到 18621–18649。
+  实际地址写入 runtime\server.json。
+
+日志：
+  logs\desktop.log   桌面壳启动日志
+  logs\server.log    本地服务日志
+  runtime\jobs\      训练任务日志
+
+注意：
+  - 首次加载模型需要几秒；有 CUDA 时会自动使用 GPU。
+  - 本程序只监听 127.0.0.1，不会对局域网开放。

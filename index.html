@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="墨识：本地优先的手写汉字与数字识别工作台。5200 类汉字、数字串动态识别、20 张样本新增类别、网页内优化训练。">
+  <meta name="theme-color" content="#f4faf7">
+  <title>墨识 · 本地手写识别</title>
+  <style>
+    /* ============================================================
+       墨识介绍页 · 白绿视觉
+       上传 GitHub 后只需要改页面底部 LINKS 里的四个地址。
+       页面不依赖任何 CDN，离线打开也能正常显示。
+       ============================================================ */
+
+    :root {
+      --bg: #f4faf7;
+      --paper: #ffffff;
+      --paper-soft: #f8fcfa;
+      --ink: #1e332e;
+      --ink-soft: #3e5750;
+      --muted: #728780;
+      --line: #dfece7;
+      --line-strong: #cfe2db;
+      --teal: #0b8b82;
+      --teal-dark: #076c65;
+      --teal-soft: #e1f5ee;
+      --mint: #d8f2e8;
+      --mint-deep: #bfe9dc;
+      --amber: #a9701b;
+      --amber-soft: #fbf3df;
+      --shadow: 0 22px 60px rgba(23, 80, 66, .09);
+      --shadow-sm: 0 8px 24px rgba(23, 80, 66, .07);
+      --radius: 22px;
+      --radius-sm: 14px;
+      --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 92px;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.75;
+      background:
+        radial-gradient(900px 520px at 8% -10%, rgba(191, 233, 220, .62), transparent 62%),
+        radial-gradient(760px 460px at 96% 2%, rgba(225, 245, 238, .9), transparent 58%),
+        linear-gradient(180deg, #f7fcfa 0%, var(--bg) 38%, #f2f9f6 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button, input { font: inherit; }
+    ::selection { background: var(--mint-deep); color: var(--ink); }
+
+    .page {
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+
+    /* ---------------- 顶栏 ---------------- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 74px;
+      padding: 12px 8px;
+      margin: 0 -8px;
+      background: rgba(247, 252, 250, .86);
+      border-bottom: 1px solid rgba(207, 226, 219, .66);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+    }
+
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      box-shadow: 0 8px 18px rgba(11, 139, 130, .16);
+    }
+
+    .brand-name {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: .04em;
+      font-size: 20px;
+    }
+
+    .brand-name small {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .22em;
+    }
+
+    .topnav {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .66);
+    }
+
+    .topnav a {
+      padding: 7px 13px;
+      border-radius: 999px;
+      color: var(--ink-soft);
+      font-size: 12.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background .18s ease, color .18s ease;
+    }
+
+    .topnav a:hover {
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .run-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .8);
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .run-pill i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #21a67a;
+      box-shadow: 0 0 0 4px rgba(33, 166, 122, .12);
+    }
+
+    /* ---------------- 三栏布局 ---------------- */
+    .layout {
+      display: grid;
+      grid-template-columns: 214px minmax(0, 1fr) 252px;
+      gap: 24px;
+      align-items: start;
+      padding: 26px 0 44px;
+    }
+
+    .rail {
+      position: sticky;
+      top: 96px;
+      align-self: start;
+    }
+
+    .rail-title {
+      margin: 0 0 10px 8px;
+      color: var(--muted);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    .toc {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 8px;
+      background: rgba(255, 255, 255, .58);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .toc a {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: 11px;
+      color: var(--ink-soft);
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: background .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .toc a i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #b7d8cc;
+      flex: 0 0 auto;
+      transition: background .18s ease, box-shadow .18s ease;
+    }
+
+    .toc a:hover {
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+      transform: translateX(2px);
+    }
+
+    .toc a.active {
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+    }
+
+    .toc a.active i {
+      background: var(--teal);
+      box-shadow: 0 0 0 3px rgba(11, 139, 130, .12);
+    }
+
+    .rail-note {
+      margin-top: 14px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--teal);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .6);
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.8;
+    }
+
+    .rail-note b { color: var(--ink-soft); }
+
+    /* ---------------- 通用 ---------------- */
+    main { min-width: 0; }
+
+    section { scroll-margin-top: 92px; }
+    section + section { margin-top: 30px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--teal-dark);
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 0 4px rgba(11, 139, 130, .12);
+    }
+
+    .section-head { margin-bottom: 18px; }
+
+    .section-head h2 {
+      margin: 8px 0 6px;
+      font-size: clamp(26px, 2.8vw, 38px);
+      line-height: 1.3;
+      letter-spacing: -.035em;
+      font-weight: 850;
+    }
+
+    .section-head p {
+      margin: 0;
+      max-width: 690px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.85;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(8px);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+
+    .badge.amber {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .pending-badge {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 7px;
+      padding: 2px 7px;
+      border: 1px solid rgba(169, 112, 27, .24);
+      border-radius: 999px;
+      background: var(--amber-soft);
+      color: var(--amber);
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      vertical-align: 1px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 10px 17px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: .01em;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, #119d92, #087b73);
+      border-color: rgba(7, 108, 101, .18);
+      box-shadow: 0 10px 22px rgba(11, 139, 130, .22), inset 0 1px 0 rgba(255, 255, 255, .25);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #0f9389, #076c65);
+      box-shadow: 0 14px 26px rgba(11, 139, 130, .28), inset 0 1px 0 rgba(255, 255, 255, .28);
+    }
+
+    .btn-soft {
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+      border-color: rgba(11, 139, 130, .13);
+    }
+
+    .btn-soft:hover { background: #d5f0e7; }
+
+    .btn-ghost {
+      color: var(--ink-soft);
+      background: rgba(255, 255, 255, .74);
+      border-color: var(--line-strong);
+    }
+
+    .btn-ghost:hover {
+      background: #fff;
+      border-color: #b7d8cc;
+    }
+
+    /* ---------------- Hero ---------------- */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.04fr) minmax(340px, .96fr);
+      gap: 30px;
+      align-items: center;
+      padding: 18px 0 8px;
+    }
+
+    .hero h1 {
+      margin: 14px 0 12px;
+      font-size: clamp(38px, 4.6vw, 56px);
+      line-height: 1.14;
+      letter-spacing: -.055em;
+      font-weight: 900;
+    }
+
+    .hero h1 span {
+      color: var(--teal);
+      position: relative;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .hero h1 span::after {
+      content: "";
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      bottom: 7px;
+      height: 10px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, rgba(191, 233, 220, .85), rgba(225, 245, 238, .2));
+      z-index: -1;
+    }
+
+    .hero-sub {
+      max-width: 620px;
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+
+    .hero-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-meta i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    .hero-visual {
+      position: relative;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, .92), rgba(239, 250, 245, .82));
+      box-shadow: var(--shadow);
+    }
+
+    .browser {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--line);
+      background: #f7fcfa;
+    }
+
+    .browser-bar i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #c7ded5;
+    }
+
+    .browser-bar i:first-child { background: #8fd3bd; }
+
+    .browser-url {
+      flex: 1;
+      margin-left: 4px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--muted);
+      background: #fff;
+      font-family: var(--mono);
+      font-size: 8.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .browser img {
+      width: 100%;
+      aspect-ratio: 1.31;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    .float-chip {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border: 1px solid rgba(207, 226, 219, .9);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .92);
+      color: var(--ink-soft);
+      box-shadow: 0 12px 28px rgba(23, 80, 66, .12);
+      font-size: 10px;
+      font-weight: 700;
+      backdrop-filter: blur(8px);
+    }
+
+    .float-chip i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    .float-chip.one { right: -8px; top: 52px; }
+    .float-chip.two { left: -10px; bottom: 42px; }
+
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 26px;
+    }
+
+    .stat {
+      padding: 13px 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .72);
+      text-align: center;
+    }
+
+    .stat b {
+      display: block;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: -.04em;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: .04em;
+    }
+
+    /* ---------------- 功能 ---------------- */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .feature {
+      position: relative;
+      padding: 18px 17px;
+      overflow: hidden;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .feature::after {
+      content: "";
+      position: absolute;
+      right: -34px;
+      top: -34px;
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(216, 242, 232, .8), transparent 68%);
+      pointer-events: none;
+    }
+
+    .feature:hover {
+      transform: translateY(-3px);
+      border-color: #bcdcd1;
+      box-shadow: var(--shadow);
+    }
+
+    .feature-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 13px;
+      border: 1px solid rgba(11, 139, 130, .12);
+      border-radius: 10px;
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .feature h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -.01em;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.85;
+    }
+
+    .feature .badge { margin-top: 12px; }
+
+    /* ---------------- 链路 ---------------- */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0;
+      margin-top: 2px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .58);
+    }
+
+    .flow-step {
+      position: relative;
+      padding: 15px 12px 14px;
+      border-right: 1px solid var(--line);
+    }
+
+    .flow-step:last-child { border-right: 0; }
+
+    .flow-step b {
+      display: block;
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .06em;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin: 4px 0 3px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .flow-step span {
+      display: block;
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.65;
+    }
+
+    /* ---------------- 截图 ---------------- */
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .shot {
+      overflow: hidden;
+      padding: 7px;
+    }
+
+    .shot a { display: block; }
+
+    .shot img {
+      width: 100%;
+      aspect-ratio: 1.31;
+      object-fit: cover;
+      object-position: top center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f7fcfa;
+      transition: transform .25s ease, filter .25s ease;
+    }
+
+    .shot:hover img {
+      transform: scale(1.012);
+      filter: saturate(1.04);
+    }
+
+    .shot figcaption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 7px 2px;
+    }
+
+    .shot figcaption b {
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .shot figcaption span {
+      color: var(--muted);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    /* ---------------- 快速开始 ---------------- */
+    .start-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .step {
+      padding: 18px;
+      counter-reset: step;
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .step-num b {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: var(--teal-soft);
+      font-size: 9px;
+    }
+
+    .step h3 {
+      margin: 0 0 5px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.8;
+    }
+
+    .codebox {
+      margin-top: 10px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #f4faf7;
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 9.5px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin-top: 11px;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-left: 3px solid #d3a044;
+      border-radius: 12px;
+      background: rgba(251, 243, 223, .55);
+      color: #745a28;
+      font-size: 10.5px;
+      line-height: 1.8;
+    }
+
+    .notice b { color: #5f471d; }
+
+    /* ---------------- 技术 ---------------- */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .panel { padding: 20px; }
+
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .spec {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: 10.5px;
+    }
+
+    .spec:last-child { border-bottom: 0; }
+    .spec span { color: var(--muted); }
+    .spec b { font-weight: 700; text-align: right; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(244, 250, 247, .8);
+      color: var(--ink-soft);
+      font-family: var(--mono);
+      font-size: 9.5px;
+    }
+
+    .tech-note {
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.8;
+    }
+
+    /* ---------------- FAQ ---------------- */
+    .faq {
+      overflow: hidden;
+      padding: 3px 19px;
+    }
+
+    details {
+      border-bottom: 1px solid var(--line);
+      padding: 13px 0;
+    }
+
+    details:last-child { border-bottom: 0; }
+
+    summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      list-style: none;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: "+";
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      font-size: 14px;
+      font-weight: 500;
+      flex: 0 0 auto;
+    }
+
+    details[open] summary::after { content: "−"; }
+
+    details p {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.85;
+    }
+
+    details a {
+      color: var(--teal-dark);
+      border-bottom: 1px solid rgba(11, 139, 130, .3);
+    }
+
+    /* ---------------- 更新日志 ---------------- */
+    .changelog {
+      padding: 18px 20px;
+    }
+
+    .log-row {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: 10.5px;
+    }
+
+    .log-row:last-child { border-bottom: 0; }
+    .log-row time { color: var(--muted); font-family: var(--mono); font-size: 9px; }
+    .log-row p { margin: 0; color: var(--ink-soft); line-height: 1.8; }
+    .log-row p b { color: var(--ink); }
+
+    /* ---------------- 右栏 ---------------- */
+    .rail-right .panel {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .68);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(10px);
+    }
+
+    .rail-right .panel + .panel { margin-top: 11px; }
+
+    .quick-links {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 7px;
+    }
+
+    .quick-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 9px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      color: var(--ink-soft);
+      font-size: 10.5px;
+      font-weight: 600;
+      transition: background .16s ease, border-color .16s ease, color .16s ease;
+    }
+
+    .quick-link:hover {
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+      border-color: rgba(11, 139, 130, .1);
+    }
+
+    .quick-link span {
+      color: #a8bbb5;
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+
+    .quick-link.pending span {
+      color: var(--amber);
+      font-family: var(--sans);
+      font-size: 8.5px;
+    }
+
+    .status-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 7px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--line);
+      font-size: 10px;
+    }
+
+    .status-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .status-row span { color: var(--muted); }
+    .status-row b { font-family: var(--mono); font-size: 9.5px; font-weight: 700; }
+    .status-row b.ok { color: var(--teal-dark); }
+
+    .rail-tip {
+      margin: 0;
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.8;
+    }
+
+    /* ---------------- footer ---------------- */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 4px 28px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .footer b { color: var(--ink-soft); }
+    .footer-links { display: flex; gap: 13px; flex-wrap: wrap; }
+    .footer a:hover { color: var(--teal-dark); }
+
+    /* ---------------- toast ---------------- */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      z-index: 100;
+      transform: translate(-50%, 12px);
+      max-width: min(520px, calc(100vw - 36px));
+      padding: 10px 16px;
+      border: 1px solid rgba(11, 139, 130, .18);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, .96);
+      color: var(--ink-soft);
+      box-shadow: 0 18px 50px rgba(23, 80, 66, .18);
+      font-size: 11px;
+      line-height: 1.6;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* ---------------- 响应式 ---------------- */
+    @media (max-width: 1360px) {
+      .hero h1 { font-size: clamp(34px, 4.2vw, 46px); }
+    }
+
+    @media (max-width: 1260px) {
+      .layout { grid-template-columns: 196px minmax(0, 1fr) 228px; gap: 18px; }
+      .hero { gap: 22px; }
+      .hero h1 { font-size: clamp(34px, 4.2vw, 46px); }
+      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .flow-step:nth-child(3) { border-right: 0; }
+      .flow-step:nth-child(n+4) { border-top: 1px solid var(--line); }
+    }
+
+    @media (max-width: 1220px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-visual { max-width: 720px; }
+      .stat-strip { max-width: 760px; }
+    }
+
+    @media (max-width: 1050px) {
+      .topnav { display: none; }
+      .layout { grid-template-columns: 190px minmax(0, 1fr); }
+      .rail-right { display: none; }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 0 14px; }
+      .topbar { min-height: 64px; }
+      .rail { display: none; }
+      .layout { display: block; padding-top: 18px; }
+      .hero { padding-top: 6px; }
+      .hero h1 { font-size: clamp(36px, 10.4vw, 50px); }
+      .hero-sub { font-size: 12.5px; }
+      .hero-actions .btn { flex: 1; min-width: 140px; }
+      .float-chip { display: none; }
+      .stat-strip { grid-template-columns: repeat(2, 1fr); }
+      .feature-grid, .shots, .start-grid, .tech-grid { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step { border-right: 0; border-bottom: 1px solid var(--line); }
+      .flow-step:last-child { border-bottom: 0; }
+      .footer { flex-direction: column; align-items: flex-start; }
+      .run-pill { display: none; }
+      .brand img { width: 38px; height: 38px; }
+      .brand-name { font-size: 18px; }
+      .brand-name small { font-size: 7.5px; letter-spacing: .14em; }
+      .top-actions { gap: 6px; }
+      .top-actions .btn { padding: 8px 10px; font-size: 10.5px; }
+      .top-actions .btn .pending-badge { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+
+<body id="top">
+  <div class="page">
+    <!-- ==================== 顶栏 ==================== -->
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="墨识首页">
+        <img src="moshii/assets/logo.png" alt="墨识 logo">
+        <span class="brand-name">墨识<small>MOSHI · LOCAL HANDWRITING</small></span>
+      </a>
+
+      <nav class="topnav" aria-label="页面导航">
+        <a href="#features">功能</a>
+        <a href="#flow">链路</a>
+        <a href="#screens">界面</a>
+        <a href="#start">开始</a>
+        <a href="#tech">技术</a>
+        <a href="#faq">问答</a>
+      </nav>
+
+      <div class="top-actions">
+        <span class="run-pill"><i></i>本地运行 · 127.0.0.1</span>
+        <a class="btn btn-ghost" data-link="github" href="#">
+          GitHub 仓库
+          <span class="pending-badge">待上传</span>
+        </a>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- ==================== 左栏 ==================== -->
+      <aside class="rail" aria-label="目录">
+        <div class="rail-title">ON THIS PAGE</div>
+        <nav class="toc">
+          <a class="active" href="#top"><i></i>概览</a>
+          <a href="#features"><i></i>核心功能</a>
+          <a href="#flow"><i></i>完整链路</a>
+          <a href="#screens"><i></i>界面截图</a>
+          <a href="#start"><i></i>三分钟开始</a>
+          <a href="#tech"><i></i>技术栈</a>
+          <a href="#faq"><i></i>常见问题</a>
+          <a href="#changelog"><i></i>更新日志</a>
+        </nav>
+        <div class="rail-note">
+          <b>本地优先。</b><br>
+          模型、样本、训练记录都在本机；页面本身不依赖外部 CDN。
+        </div>
+      </aside>
+
+      <!-- ==================== 正文 ==================== -->
+      <main>
+        <!-- ---------- Hero ---------- -->
+        <section class="hero" aria-label="墨识简介">
+          <div>
+            <span class="eyebrow">LOCAL HANDWRITING LAB · 2026</span>
+            <h1>把字迹，<br><span>变成可理解的字。</span></h1>
+            <p class="hero-sub">
+              墨识是一套本地优先的手写识别工作台：5200 类汉字、数字串动态识别、
+              20 张样本新增类别、网页内优化训练，以及可复核的 AI 桥接。
+              不把数据交出去，也能把每一个字认真识别清楚。
+            </p>
+
+            <div class="hero-actions">
+              <a class="btn btn-primary" data-link="online" href="#">
+                在线体验
+                <span class="pending-badge">待上传</span>
+              </a>
+              <a class="btn btn-soft" data-link="release" href="#">
+                下载安装助手
+                <span class="pending-badge">待上传</span>
+              </a>
+              <a class="btn btn-ghost" href="#features">先看看功能 ↓</a>
+            </div>
+
+            <div class="hero-meta">
+              <span><i></i>PySide6 桌面 + 本地 Web</span>
+              <span><i></i>数据不出本机</span>
+              <span><i></i>端口 18620</span>
+            </div>
+
+            <div class="stat-strip" aria-label="项目数据">
+              <div class="stat"><b>5200</b><span>汉字类别</span></div>
+              <div class="stat"><b>10</b><span>数字类别</span></div>
+              <div class="stat"><b>98.17%</b><span>旧类回放</span></div>
+              <div class="stat"><b>1,694</b><span>样本</span></div>
+              <div class="stat"><b>20</b><span>张新增类别</span></div>
+            </div>
+          </div>
+
+          <div class="hero-visual">
+            <div class="browser">
+              <div class="browser-bar" aria-hidden="true">
+                <i></i><i></i><i></i>
+                <span class="browser-url">http://127.0.0.1:18620/</span>
+              </div>
+              <a href="docs/screenshots/recognition.png" target="_blank" rel="noopener noreferrer" aria-label="查看识别界面大图">
+                <img src="docs/screenshots/recognition.png" alt="墨识识别界面" loading="eager">
+              </a>
+            </div>
+            <span class="float-chip one"><i></i>5200 类 · 本机推理</span>
+            <span class="float-chip two"><i></i>识别 / 训练 / 复核</span>
+          </div>
+        </section>
+
+        <!-- ---------- 核心功能 ---------- -->
+        <section id="features">
+          <div class="section-head">
+            <span class="eyebrow">CORE FEATURES</span>
+            <h2>不是演示，是一套能每天用的本地工作台。</h2>
+            <p>从识别到修正，从新增类别到训练部署，每一环都为“自己的字迹”服务。</p>
+          </div>
+
+          <div class="feature-grid">
+            <article class="card feature">
+              <div class="feature-icon">字</div>
+              <h3>5200 类汉字底座</h3>
+              <p>从 3760 类扩展到 5200 类，覆盖常用字与 GB2312 二级字；旧类回放保持 98.17%。</p>
+              <span class="badge">5200 classes</span>
+            </article>
+
+            <article class="card feature">
+              <div class="feature-icon">+</div>
+              <h3>20 张样本，新增任意字</h3>
+              <p>类别库外的手写字也能加入：输入汉字，一次提供 20 张样本，扩展分类头并只训练新类。</p>
+              <span class="badge">custom category</span>
+            </article>
+
+            <article class="card feature">
+              <div class="feature-icon">123</div>
+              <h3>数字串 · 动态识别</h3>
+              <p>一行连续写多位数字，按连通域分割；开启动态识别后，停笔约 0.7 秒自动出结果。</p>
+              <span class="badge">multi-digit</span>
+            </article>
+
+            <article class="card feature">
+              <div class="feature-icon">↻</div>
+              <h3>网页内优化训练</h3>
+              <p>冻结主干、解冻最后 3 个 block 与分类头；本地样本 + 字体合成 + HWDB 回放，完成后自动热加载。</p>
+              <span class="badge">fine-tune</span>
+            </article>
+
+            <article class="card feature">
+              <div class="feature-icon">AI</div>
+              <h3>AI 交叉复核</h3>
+              <p>通义千问 VL、智谱 GLM-4V、OpenAI、Moonshot、DeepSeek、Ollama 或自定义端点，参与逐字对比与权重融合。</p>
+              <span class="badge">optional</span>
+            </article>
+
+            <article class="card feature">
+              <div class="feature-icon">↓</div>
+              <h3>安装助手 · 一键部署</h3>
+              <p>PySide6 安装向导、管理员权限、自动建目录、Conda 优先；覆盖升级时保留样本、报告与 AI 配置。</p>
+              <span class="badge">Windows</span>
+            </article>
+          </div>
+        </section>
+
+        <!-- ---------- 链路 ---------- -->
+        <section id="flow">
+          <div class="section-head">
+            <span class="eyebrow">ONE CLEAR PATH</span>
+            <h2>一条完整的链路，不用在工具之间来回搬。</h2>
+            <p>识别不是终点，修正、样本、训练和复核都在同一个本地服务里完成。</p>
+          </div>
+
+          <div class="flow" aria-label="使用链路">
+            <div class="flow-step">
+              <b>01 / INPUT</b>
+              <strong>写或上传</strong>
+              <span>画板手写、图片、印刷字体都可以。</span>
+            </div>
+            <div class="flow-step">
+              <b>02 / RECOGNIZE</b>
+              <strong>识别与 Top-5</strong>
+              <span>5 视角 TTA，查看候选与置信度。</span>
+            </div>
+            <div class="flow-step">
+              <b>03 / CORRECT</b>
+              <strong>修正并标样本</strong>
+              <span>把正确的字保存为自己的笔迹。</span>
+            </div>
+            <div class="flow-step">
+              <b>04 / TRAIN</b>
+              <strong>优化并热加载</strong>
+              <span>安全闸门通过后自动替换模型。</span>
+            </div>
+            <div class="flow-step">
+              <b>05 / REVIEW</b>
+              <strong>AI 复核与部署</strong>
+              <span>可选的第二意见，最终仍由你确认。</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- 截图 ---------- -->
+        <section id="screens">
+          <div class="section-head">
+            <span class="eyebrow">INTERFACE</span>
+            <h2>白绿、安静、把注意力留给字。</h2>
+            <p>识别、新增类别、训练确认和安装向导都使用同一套视觉语言。</p>
+          </div>
+
+          <div class="shots">
+            <figure class="card shot">
+              <a href="docs/screenshots/recognition.png" target="_blank" rel="noopener noreferrer">
+                <img src="docs/screenshots/recognition.png" alt="识别界面截图" loading="lazy">
+              </a>
+              <figcaption><b>识别与 Top-5</b><span>recognition</span></figcaption>
+            </figure>
+
+            <figure class="card shot">
+              <a href="docs/screenshots/category.png" target="_blank" rel="noopener noreferrer">
+                <img src="docs/screenshots/category.png" alt="新增类别弹窗截图" loading="lazy">
+              </a>
+              <figcaption><b>新增类别 · 20 张样本</b><span>category</span></figcaption>
+            </figure>
+
+            <figure class="card shot">
+              <a href="docs/screenshots/train-confirm.png" target="_blank" rel="noopener noreferrer">
+                <img src="docs/screenshots/train-confirm.png" alt="训练确认弹窗截图" loading="lazy">
+              </a>
+              <figcaption><b>训练确认 · 白底深色字</b><span>train confirm</span></figcaption>
+            </figure>
+
+            <figure class="card shot">
+              <a href="docs/screenshots/installer.png" target="_blank" rel="noopener noreferrer">
+                <img src="docs/screenshots/installer.png" alt="安装助手截图" loading="lazy">
+              </a>
+              <figcaption><b>安装助手 · Conda 优先</b><span>installer</span></figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <!-- ---------- 快速开始 ---------- -->
+        <section id="start">
+          <div class="section-head">
+            <span class="eyebrow">QUICK START</span>
+            <h2>三分钟，把第一笔写进自己的模型。</h2>
+            <p>安装助手会处理 Python 环境、模型和快捷方式；启动后浏览器与桌面窗口共享同一个本地服务。</p>
+          </div>
+
+          <div class="start-grid">
+            <article class="card step">
+              <div class="step-num"><b>01</b> INSTALL</div>
+              <h3>运行安装助手</h3>
+              <p>选择目录，安装助手自动创建文件夹；本机已有 Conda 时优先复用。</p>
+              <div class="codebox">墨识安装助手.exe</div>
+            </article>
+
+            <article class="card step">
+              <div class="step-num"><b>02</b> LAUNCH</div>
+              <h3>启动本地服务</h3>
+              <p>桌面快捷方式启动 PySide6 窗口，地址固定为本机回环，不监听局域网。</p>
+              <div class="codebox">http://127.0.0.1:18620/</div>
+            </article>
+
+            <article class="card step">
+              <div class="step-num"><b>03</b> WRITE</div>
+              <h3>写、改、训练</h3>
+              <p>写一个字，查看 Top-5；错了就修正并标为样本，下一次训练会记住它。</p>
+              <div class="codebox">写 → 识别 → 修正 → 训练</div>
+            </article>
+          </div>
+
+          <div class="notice">
+            <span>!</span>
+            <div><b>端口说明：</b>默认 18620，被占用时自动顺延到 18621–18649，刻意避开原来的 8000。服务只绑定 <code>127.0.0.1</code>。</div>
+          </div>
+        </section>
+
+        <!-- ---------- 技术 ---------- -->
+        <section id="tech">
+          <div class="section-head">
+            <span class="eyebrow">UNDER THE HOOD</span>
+            <h2>本地模型，也有完整的工程细节。</h2>
+            <p>不追求把参数堆到最大，而是让识别、训练和部署在同一条链路上可控、可回滚。</p>
+          </div>
+
+          <div class="tech-grid">
+            <article class="card panel">
+              <h3>模型与数据</h3>
+              <div class="spec"><span>汉字模型</span><b>MobileNetV2 · 5200 类</b></div>
+              <div class="spec"><span>数字模型</span><b>MnistCNN · 10 类</b></div>
+              <div class="spec"><span>输入规格</span><b>64×64 白墨黑底</b></div>
+              <div class="spec"><span>融合方式</span><b>5 视角 TTA</b></div>
+              <div class="spec"><span>新增类别</span><b>20 张样本 · 只训新行</b></div>
+              <div class="spec"><span>训练保护</span><b>旧类回放 + 安全闸门</b></div>
+            </article>
+
+            <article class="card panel">
+              <h3>技术栈</h3>
+              <div class="chips">
+                <span class="chip">Python 3.13</span>
+                <span class="chip">PyTorch 2.11</span>
+                <span class="chip">CUDA 12.8</span>
+                <span class="chip">torchvision</span>
+                <span class="chip">OpenCV</span>
+                <span class="chip">NumPy</span>
+                <span class="chip">PySide6</span>
+                <span class="chip">ThreadingHTTPServer</span>
+              </div>
+              <p class="tech-note">
+                桌面层使用 PySide6 承载同一套本地 Web 界面；推理、训练、样本和 AI 配置在同一台机器上完成。
+                没有外部数据库，也没有默认的云端上传。
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <!-- ---------- FAQ ---------- -->
+        <section id="faq">
+          <div class="section-head">
+            <span class="eyebrow">FAQ</span>
+            <h2>几个常见问题。</h2>
+          </div>
+
+          <div class="card faq">
+            <details open>
+              <summary>数据会上传到云端吗？</summary>
+              <p>默认不会。识别、样本、训练和报告都在本机。只有你主动配置并调用云端 AI 时，图片或文本才会发往你填写的那一个端点；API Key 用 Windows DPAPI 加密保存。</p>
+            </details>
+            <details>
+              <summary>为什么端口是 18620，而不是 8000？</summary>
+              <p>为了避开原来 8000 端口上的旧服务。默认 18620，被占用时自动顺延到 18621–18649；服务只绑定 127.0.0.1，局域网其他设备无法访问。</p>
+            </details>
+            <details>
+              <summary>遇到类别库外的字怎么办？</summary>
+              <p>打开「样本库 → 新增类别」，输入这个字并一次提供 20 张样本。系统会扩展分类头、只训练新类，并用旧类回放保护原来的识别能力。</p>
+            </details>
+            <details>
+              <summary>数字能一次识别多位吗？</summary>
+              <p>可以。数字模式支持在一行连续写多位，按连通域分割；开启动态识别后，停笔约 0.7 秒自动出结果。</p>
+            </details>
+            <details>
+              <summary>安装时需要自己配 Python 吗？</summary>
+              <p>安装助手会先检测本机环境；有 Conda 时优先复用，没有可用环境时可以选择新建 Conda 或 venv。详细说明见 <a href="运行环境说明.txt" target="_blank" rel="noopener noreferrer">运行环境说明</a>。</p>
+            </details>
+          </div>
+        </section>
+
+        <!-- ---------- 更新日志 ---------- -->
+        <section id="changelog">
+          <div class="section-head">
+            <span class="eyebrow">CHANGELOG</span>
+            <h2>最近更新。</h2>
+          </div>
+
+          <div class="card changelog">
+            <div class="log-row">
+              <time>2026-11</time>
+              <p><b>v1.0.0 · 5200 类与新增类别</b><br>汉字库扩展到 5200 类；新增「20 张样本」类别添加；数字串动态识别；训练确认弹窗对比度修复；本机硬件型号写入训练报告。</p>
+            </div>
+            <div class="log-row">
+              <time>2026-11</time>
+              <p><b>DeepSeek 与样本重打包</b><br>新增 DeepSeek 文本复核；样本库可导出 ZIP；安装助手支持把当前样本与模型重新打包。</p>
+            </div>
+            <div class="log-row">
+              <time>2026-11</time>
+              <p><b>安装与环境</b><br>Conda 优先、管理员安装、自动创建目录、桌面安装助手、覆盖升级保留样本与配置。</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ==================== 右栏 ==================== -->
+      <aside class="rail rail-right" aria-label="快捷入口">
+        <div class="panel">
+          <div class="rail-title" style="margin-left:0">QUICK LINKS</div>
+          <div class="quick-links">
+            <a class="quick-link" data-link="github" href="#">GitHub 仓库 <span class="pending-text">待上传</span></a>
+            <a class="quick-link" data-link="online" href="#">在线体验 <span class="pending-text">待上传</span></a>
+            <a class="quick-link" data-link="release" href="#">下载安装助手 <span class="pending-text">待上传</span></a>
+            <a class="quick-link" href="#changelog">更新日志 <span>↗</span></a>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="rail-title" style="margin-left:0">PROJECT STATUS</div>
+          <div class="status-list">
+            <div class="status-row"><span>版本</span><b>v1.0.0</b></div>
+            <div class="status-row"><span>汉字类别</span><b>5200</b></div>
+            <div class="status-row"><span>样本</span><b>1,694</b></div>
+            <div class="status-row"><span>本地端口</span><b>18620</b></div>
+            <div class="status-row"><span>数据位置</span><b class="ok">本机</b></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="rail-title" style="margin-left:0">DOCUMENTS</div>
+          <div class="quick-links">
+            <a class="quick-link" href="README.md" target="_blank" rel="noopener noreferrer">README <span>md</span></a>
+            <a class="quick-link" href="机制说明.md" target="_blank" rel="noopener noreferrer">机制说明 <span>md</span></a>
+            <a class="quick-link" href="AI接入说明.md" target="_blank" rel="noopener noreferrer">AI 接入说明 <span>md</span></a>
+            <a class="quick-link" href="运行环境说明.txt" target="_blank" rel="noopener noreferrer">运行环境 <span>txt</span></a>
+          </div>
+        </div>
+
+        <div class="panel">
+          <p class="rail-tip">
+            页面本身不依赖外部 CDN，断网也能打开。GitHub 地址上传后再填入页面脚本的 <b>LINKS</b> 即可。
+          </p>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ==================== 页脚 ==================== -->
+    <footer class="footer">
+      <div><b>墨识</b> · 本地手写与字体识别 <span style="color:#a8bbb5">/</span> 数据留在本机</div>
+      <div class="footer-links">
+        <a href="#top">回到顶部 ↑</a>
+        <a href="#features">功能</a>
+        <a href="README.md" target="_blank" rel="noopener noreferrer">README</a>
+        <span>© <span id="year">2026</span> MOSHI</span>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /* ============================================================
+       上传 GitHub 后，只改这里：
+       github   → 仓库主页
+       online   → GitHub Pages / 在线体验地址
+       release  → Releases 里的安装包下载地址
+       issues   → Issues 地址（可选）
+       留空时按钮保持“待上传”，点击只提示，不会跳转、不会执行任何危险操作。
+       ============================================================ */
+    const LINKS = {
+      github: "",
+      online: "",
+      release: "",
+      issues: ""
+    };
+
+    const LINK_LABELS = {
+      github: "GitHub 仓库",
+      online: "在线体验",
+      release: "安装助手下载",
+      issues: "Issues"
+    };
+
+    const toastEl = document.getElementById('toast');
+    let toastTimer = 0;
+
+    function showToast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+    }
+
+    /* 处理所有带 data-link 的入口：有地址就正常跳转，没有地址就提示 */
+    document.querySelectorAll('[data-link]').forEach(a => {
+      const key = a.dataset.link;
+      const url = (LINKS[key] || '').trim();
+      if (url) {
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.querySelectorAll('.pending-badge, .pending-text').forEach(el => el.remove());
+        a.classList.remove('pending');
+        return;
+      }
+      a.classList.add('pending');
+      a.setAttribute('data-pending', 'true');
+      a.addEventListener('click', event => {
+        event.preventDefault();
+        showToast(`${LINK_LABELS[key] || '这个链接'}还没有填写，等 GitHub 上传后再补上。`);
+      });
+    });
+
+    /* 目录高亮：滚动到哪个 section，左侧就点亮哪一项 */
+    const tocLinks = [...document.querySelectorAll('.toc a')];
+    const sections = tocLinks
+      .map(a => document.querySelector(a.getAttribute('href')))
+      .filter(Boolean);
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const id = '#' + entry.target.id;
+          tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === id));
+        });
+      }, { rootMargin: '-18% 0px -72% 0px', threshold: 0 });
+
+      sections.forEach(section => observer.observe(section));
+    }
+
+    /* 年份自动更新 */
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    /* 页面内锚点：原生平滑滚动，不劫持外部链接 */
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', event => {
+        const id = a.getAttribute('href');
+        if (!id || id === '#') return;
+        const target = document.querySelector(id);
+        if (!target) return;
+        event.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+</body>
+
+</html>
