@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="墨识网页体验版：只使用打包时的本地 5200 类模型做识别，不训练、不调用 AI、不修改样本库。">
+  <meta name="theme-color" content="#f4faf7">
+  <link rel="icon" href="moshii/assets/moshi.ico">
+  <title>墨识 · 网页体验版</title>
+  <style>
+    :root {
+      --bg: #f4faf7;
+      --paper: #fff;
+      --paper-soft: #f8fcfa;
+      --ink: #1e332e;
+      --ink-soft: #3e5750;
+      --muted: #728780;
+      --line: #dfece7;
+      --line-strong: #cfe2db;
+      --teal: #0b8b82;
+      --teal-dark: #076c65;
+      --teal-soft: #e1f5ee;
+      --mint: #d8f2e8;
+      --amber: #a9701b;
+      --amber-soft: #fbf3df;
+      --shadow: 0 22px 60px rgba(23, 80, 66, .09);
+      --shadow-sm: 0 8px 24px rgba(23, 80, 66, .07);
+      --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.75;
+      background:
+        radial-gradient(900px 520px at 8% -10%, rgba(191, 233, 220, .62), transparent 62%),
+        radial-gradient(760px 460px at 96% 2%, rgba(225, 245, 238, .9), transparent 58%),
+        linear-gradient(180deg, #f7fcfa 0%, var(--bg) 38%, #f2f9f6 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button { font: inherit; }
+    ::selection { background: #bfe9dc; color: var(--ink); }
+
+    .page { width: min(1240px, 100%); margin: 0 auto; padding: 0 22px; }
+
+    /* ---------------- header ---------------- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 70px;
+      padding: 11px 6px;
+      margin: 0 -6px;
+      background: rgba(247, 252, 250, .88);
+      border-bottom: 1px solid rgba(207, 226, 219, .66);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+    .brand img { width: 40px; height: 40px; border-radius: 12px; box-shadow: 0 8px 18px rgba(11, 139, 130, .16); }
+    .brand-name { display: flex; flex-direction: column; line-height: 1.15; font-size: 19px; font-weight: 800; letter-spacing: .04em; }
+    .brand-name small { margin-top: 3px; color: var(--muted); font-size: 8.5px; font-weight: 600; letter-spacing: .2em; }
+    .brand .badge { margin-left: 2px; }
+
+    .top-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 37px;
+      padding: 8px 13px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, #119d92, #087b73);
+      border-color: rgba(7, 108, 101, .18);
+      box-shadow: 0 10px 22px rgba(11, 139, 130, .2), inset 0 1px 0 rgba(255, 255, 255, .25);
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, #0f9389, #076c65); }
+    .btn-soft { color: var(--teal-dark); background: var(--teal-soft); border-color: rgba(11, 139, 130, .14); }
+    .btn-soft:hover { background: #d5f0e7; }
+    .btn-ghost { color: var(--ink-soft); background: rgba(255, 255, 255, .76); border-color: var(--line-strong); }
+    .btn-ghost:hover { background: #fff; border-color: #b7d8cc; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--teal-soft);
+      color: var(--teal-dark);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); }
+
+    /* ---------------- hero ---------------- */
+    .hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 30px 0 18px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--teal-dark);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 0 4px rgba(11, 139, 130, .12);
+    }
+    .hero h1 {
+      margin: 9px 0 6px;
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.16;
+      letter-spacing: -.05em;
+      font-weight: 900;
+    }
+    .hero h1 span { color: var(--teal); }
+    .hero p { max-width: 640px; margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.9; }
+    .limit-pills { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+    .limit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .7);
+      color: var(--muted);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+    .limit-pill i { width: 5px; height: 5px; border-radius: 50%; background: #b7d8cc; }
+    .limit-pill.no { color: #8b6b33; border-color: #ead9b8; background: rgba(251, 243, 223, .7); }
+    .limit-pill.no i { background: #d3a044; }
+    .limit-pill.yes { color: var(--teal-dark); border-color: #cde9df; background: var(--teal-soft); }
+    .limit-pill.yes i { background: var(--teal); }
+
+    /* ---------------- main ---------------- */
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(330px, .82fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .87);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2 { margin: 0; font-size: 12px; font-weight: 800; }
+    .panel-head span { color: var(--muted); font-size: 9px; }
+
+    .mode-switch {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f7fcfa;
+    }
+    .mode-switch button {
+      border: 0;
+      border-radius: 6px;
+      padding: 4px 9px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 9.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mode-switch button.active { background: #fff; color: var(--teal-dark); box-shadow: 0 2px 6px rgba(23, 80, 66, .08); }
+
+    .pad-wrap { padding: 14px 16px 0; }
+    .pad-shell {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background:
+        linear-gradient(90deg, rgba(223, 236, 231, .4) 1px, transparent 1px),
+        linear-gradient(rgba(223, 236, 231, .4) 1px, transparent 1px),
+        #fff;
+      background-size: 24px 24px;
+      touch-action: none;
+    }
+    canvas#pad { display: block; width: 100%; aspect-ratio: 1 / 1; cursor: crosshair; touch-action: none; }
+
+    .pad-tip {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      color: #a4b7b0;
+      font-size: 9px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 16px 14px;
+    }
+    .tools .spacer { flex: 1; }
+    .tool-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink-soft);
+      font-size: 9.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tool-btn:hover { background: var(--teal-soft); border-color: #cde9df; color: var(--teal-dark); }
+    .tool-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .recognize-btn { min-width: 104px; }
+
+    /* ---------------- result ---------------- */
+    .result-card { display: flex; flex-direction: column; }
+    .result-body { display: flex; flex-direction: column; flex: 1; padding: 16px; }
+
+    .result-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      min-height: 250px;
+      text-align: center;
+    }
+    .result-empty .ghost-char {
+      display: grid;
+      place-items: center;
+      width: 86px;
+      height: 86px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(160deg, #fff, #f2faf6);
+      color: #bfd9cf;
+      font-size: 40px;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 #fff;
+    }
+    .result-empty b { margin-top: 13px; font-size: 12px; }
+    .result-empty span { margin-top: 3px; color: var(--muted); font-size: 9.5px; }
+
+    .result-real { display: none; flex-direction: column; flex: 1; }
+    .result-real.show { display: flex; }
+    .result-empty.hide { display: none; }
+
+    .result-main {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0 10px;
+      border-bottom: 1px dashed var(--line);
+    }
+    .result-char {
+      min-height: 72px;
+      color: var(--ink);
+      font-size: 58px;
+      line-height: 1.15;
+      font-weight: 900;
+      letter-spacing: -.06em;
+    }
+    .result-conf { text-align: right; white-space: nowrap; }
+    .result-conf b { display: block; color: var(--teal-dark); font-size: 20px; letter-spacing: -.04em; }
+    .result-conf span { color: var(--muted); font-size: 8.5px; }
+
+    .result-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0 3px;
+      color: var(--muted);
+      font-size: 8.5px;
+    }
+
+    .candidates { margin-top: 7px; }
+    .candidate {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+    .candidate .c-char { width: 24px; color: var(--ink); font-size: 14px; font-weight: 800; text-align: center; }
+    .candidate .c-bar { flex: 1; height: 4px; border-radius: 99px; background: #edf5f1; overflow: hidden; }
+    .candidate .c-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #8fd3bd, var(--teal)); }
+    .candidate .c-pct { width: 38px; color: var(--muted); font-family: var(--mono); font-size: 8px; text-align: right; }
+
+    .result-foot {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+      color: var(--muted);
+      font-size: 8.5px;
+      line-height: 1.65;
+    }
+
+    /* ---------------- status ---------------- */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 11px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, .7);
+      color: var(--muted);
+      font-size: 9.5px;
+    }
+    .status-bar i { width: 6px; height: 6px; border-radius: 50%; background: #d3a044; flex: 0 0 auto; }
+    .status-bar.ready i { background: #21a67a; box-shadow: 0 0 0 3px rgba(33, 166, 122, .12); }
+    .status-bar.error i { background: #c65b45; }
+    .status-bar .spacer { flex: 1; }
+    .status-bar b { color: var(--ink-soft); font-weight: 700; }
+
+    .load-track { height: 3px; margin-top: 7px; border-radius: 99px; background: #e8f2ee; overflow: hidden; display: none; }
+    .load-track.show { display: block; }
+    .load-track i { display: block; width: 0; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #8fd3bd, var(--teal)); transition: width .2s ease; }
+
+    /* ---------------- notice / download ---------------- */
+    .notice-row {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .notice {
+      padding: 14px 15px;
+      border: 1px solid #ead9b8;
+      border-left: 3px solid #d3a044;
+      border-radius: 12px;
+      background: rgba(251, 243, 223, .58);
+      color: #745a28;
+      font-size: 10px;
+      line-height: 1.8;
+    }
+    .notice b { color: #5f471d; }
+
+    .download-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 13px;
+      padding: 14px 15px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .72);
+    }
+    .download-card b { display: block; font-size: 11px; }
+    .download-card span { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .download-card code { color: var(--teal-dark); font-family: var(--mono); font-weight: 700; }
+    .download-card .btn { flex: 0 0 auto; }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 20px 2px 28px;
+      border-top: 1px solid var(--line);
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 9.5px;
+    }
+    .footer b { color: var(--ink-soft); }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 12px; }
+    .footer a:hover { color: var(--teal-dark); }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 100;
+      transform: translate(-50%, 12px);
+      max-width: min(520px, calc(100vw - 32px));
+      padding: 10px 15px;
+      border: 1px solid rgba(11, 139, 130, .18);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .97);
+      color: var(--ink-soft);
+      box-shadow: 0 18px 50px rgba(23, 80, 66, .18);
+      font-size: 10.5px;
+      line-height: 1.6;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 920px) {
+      .workbench { grid-template-columns: 1fr; }
+      .result-empty { min-height: 190px; }
+      .hero { align-items: flex-start; flex-direction: column; gap: 12px; }
+      .limit-pills { justify-content: flex-start; }
+      .notice-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 0 14px; }
+      .topbar { min-height: 62px; }
+      .brand img { width: 36px; height: 36px; }
+      .brand-name { font-size: 17px; }
+      .brand-name small { font-size: 7px; letter-spacing: .13em; }
+      .brand .badge { display: none; }
+      .top-actions .btn { padding: 7px 9px; font-size: 9.5px; }
+      .top-actions .btn.hide-mobile { display: none; }
+      .hero { padding-top: 22px; }
+      .hero h1 { font-size: 34px; }
+      .tools { gap: 5px; }
+      .recognize-btn { flex: 1; }
+      .result-char { font-size: 52px; }
+      .footer { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="返回墨识介绍页">
+        <img src="moshii/assets/logo.png" alt="墨识 logo">
+        <span class="brand-name">墨识<small>MOSHI · WEB DEMO</small></span>
+        <span class="badge">体验版 · 仅识别</span>
+      </a>
+      <div class="top-actions">
+        <a class="btn btn-ghost hide-mobile" href="index.html">项目介绍</a>
+        <a class="btn btn-ghost hide-mobile" href="https://github.com/wocao123103/ink_recognition-moshi" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <a class="btn btn-primary" href="https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912" target="_blank" rel="noopener noreferrer">完整版 · 提取码 8912</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <span class="eyebrow">READ-ONLY WEB DEMO</span>
+        <h1>只识别，<span>不训练。</span></h1>
+        <p>
+          这是墨识的网页体验版：只加载打包时的本地 5200 类模型快照，在浏览器里完成识别。
+          没有训练入口、不调用任何 AI API、也不能修改样本库。刷新页面后不会留下任何内容。
+        </p>
+      </div>
+      <div class="limit-pills" aria-label="体验版能力">
+        <span class="limit-pill yes"><i></i>本地模型识别</span>
+        <span class="limit-pill no"><i></i>无训练</span>
+        <span class="limit-pill no"><i></i>无 AI API</span>
+        <span class="limit-pill no"><i></i>不改样本库</span>
+      </div>
+    </section>
+
+    <div class="workbench">
+      <!-- 画板 -->
+      <section class="card" aria-label="识别画板">
+        <div class="panel-head">
+          <h2>写一个字</h2>
+          <div class="mode-switch" role="group" aria-label="识别模式">
+            <button type="button" class="active" data-mode="hanzi">汉字</button>
+            <button type="button" data-mode="digit">数字</button>
+          </div>
+        </div>
+
+        <div class="pad-wrap">
+          <div class="pad-shell">
+            <canvas id="pad" width="512" height="512" aria-label="手写画板"></canvas>
+            <span class="pad-tip" id="padTip">在这里写一个汉字</span>
+          </div>
+        </div>
+
+        <div class="tools">
+          <button class="tool-btn" id="uploadBtn" type="button">上传图片</button>
+          <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/bmp" hidden>
+          <button class="tool-btn" id="undoBtn" type="button">撤销</button>
+          <button class="tool-btn" id="clearBtn" type="button">清空</button>
+          <span class="spacer"></span>
+          <button class="btn btn-primary recognize-btn" id="recognizeBtn" type="button" disabled>识别</button>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+          <i></i>
+          <span id="statusText">正在加载本地模型…</span>
+          <span class="spacer"></span>
+          <b id="statusSize">5200 类</b>
+        </div>
+        <div class="load-track show" id="loadTrack"><i id="loadBar"></i></div>
+      </section>
+
+      <!-- 结果 -->
+      <section class="card result-card" aria-label="识别结果">
+        <div class="panel-head">
+          <h2>识别结果</h2>
+          <span id="resultMode">汉字 · Top-5</span>
+        </div>
+        <div class="result-body">
+          <div class="result-empty" id="resultEmpty">
+            <div class="ghost-char">字</div>
+            <b>结果会出现在这里</b>
+            <span>写一个字，或上传一张单字图片</span>
+          </div>
+
+          <div class="result-real" id="resultReal">
+            <div class="result-main">
+              <div class="result-char" id="resultChar">—</div>
+              <div class="result-conf"><b id="resultConf">—</b><span>置信度</span></div>
+            </div>
+            <div class="result-meta"><span id="resultTime">—</span><span id="resultTop">Top-5</span></div>
+            <div class="candidates" id="candidates"></div>
+            <div class="result-foot">
+              识别在本机浏览器内完成，图片不会上传到服务器。体验版一次只识别一个汉字/数字。
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="notice-row">
+      <div class="notice">
+        <b>体验版和完整版的区别</b><br>
+        体验版只保留「本地模型推理」：不能新增/删除样本，不能运行优化训练，不能配置 AI 提供商，也不会写入任何文件。
+        完整版包含 20 张样本新增类别、网页内训练、AI 复核、调试台和安装助手。
+      </div>
+      <div class="download-card">
+        <div>
+          <b>完整版安装助手</b>
+          <span>百度网盘 · 提取码 <code>8912</code></span>
+        </div>
+        <a class="btn btn-primary" href="https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912" target="_blank" rel="noopener noreferrer">打开网盘 ↗</a>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div><b>墨识</b> · 网页体验版 <span style="color:#a8bbb5">/</span> 模型快照 · 只读推理</div>
+      <div class="footer-links">
+        <a href="index.html">项目介绍</a>
+        <a href="https://github.com/wocao123103/ink_recognition-moshi" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912" target="_blank" rel="noopener noreferrer">下载完整版（8912）</a>
+        <span>© <span id="year">2026</span> MOSHI</span>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ONNX Runtime Web：只用于在浏览器里执行本地模型 -->
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const $ = (sel) => document.querySelector(sel);
+      const canvas = $('#pad');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const statusBar = $('#statusBar');
+      const statusText = $('#statusText');
+      const loadTrack = $('#loadTrack');
+      const loadBar = $('#loadBar');
+      const recognizeBtn = $('#recognizeBtn');
+      const resultEmpty = $('#resultEmpty');
+      const resultReal = $('#resultReal');
+      const resultChar = $('#resultChar');
+      const resultConf = $('#resultConf');
+      const candidates = $('#candidates');
+      const padTip = $('#padTip');
+
+      const MODEL_HANZI = 'tiyanban_assets/moshi_hanzi_5k.onnx';
+      const MODEL_DIGIT = 'tiyanban_assets/moshi_digit.onnx';
+      const CHARSET = 'tiyanban_assets/charset.json';
+
+      const S = {
+        mode: 'hanzi',
+        strokes: [],
+        drawing: false,
+        current: null,
+        uploading: false,
+        hanziSession: null,
+        digitSession: null,
+        chars: [],
+        loading: false,
+        ready: false,
+        busy: false
+      };
+
+      const toastEl = $('#toast');
+      let toastTimer = 0;
+      function toast(text) {
+        toastEl.textContent = text;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3000);
+      }
+
+      /* ---------------- 画板 ---------------- */
+      function fillWhite() {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function drawStroke(s) {
+        if (!s || !s.points.length) return;
+        ctx.strokeStyle = '#14221f';
+        ctx.lineWidth = 16;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        const first = s.points[0];
+        ctx.moveTo(first.x, first.y);
+        for (let i = 1; i < s.points.length; i++) {
+          const p = s.points[i];
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      }
+
+      function redraw() {
+        fillWhite();
+        S.strokes.forEach(drawStroke);
+        padTip.style.display = S.strokes.length ? 'none' : '';
+      }
+
+      function pointFrom(e) {
+        const r = canvas.getBoundingClientRect();
+        return {
+          x: (e.clientX - r.left) * canvas.width / r.width,
+          y: (e.clientY - r.top) * canvas.height / r.height
+        };
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        if (S.uploading) return;
+        e.preventDefault();
+        canvas.setPointerCapture(e.pointerId);
+        S.drawing = true;
+        S.current = { points: [pointFrom(e)] };
+        S.strokes.push(S.current);
+        redraw();
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!S.drawing || !S.current) return;
+        e.preventDefault();
+        S.current.points.push(pointFrom(e));
+        redraw();
+      });
+
+      function endStroke() {
+        S.drawing = false;
+        S.current = null;
+      }
+      canvas.addEventListener('pointerup', endStroke);
+      canvas.addEventListener('pointercancel', endStroke);
+      canvas.addEventListener('pointerleave', (e) => { if (S.drawing) endStroke(); });
+
+      $('#clearBtn').addEventListener('click', () => {
+        S.strokes = [];
+        S.uploading = false;
+        redraw();
+        hideResult();
+      });
+
+      $('#undoBtn').addEventListener('click', () => {
+        if (S.uploading) {
+          S.uploading = false;
+          $('#fileInput').value = '';
+          S.strokes = [];
+          redraw();
+          return;
+        }
+        S.strokes.pop();
+        redraw();
+      });
+
+      /* ---------------- 上传图片 ---------------- */
+      $('#uploadBtn').addEventListener('click', () => $('#fileInput').click());
+      $('#fileInput').addEventListener('change', async () => {
+        const file = $('#fileInput').files && $('#fileInput').files[0];
+        if (!file) return;
+        try {
+          const bitmap = await createImageBitmap(file);
+          drawUploaded(bitmap);
+        } catch (err) {
+          toast('图片读取失败，请换一张 PNG / JPEG');
+        }
+      });
+
+      function drawUploaded(bitmap) {
+        const tmp = document.createElement('canvas');
+        tmp.width = 512; tmp.height = 512;
+        const t = tmp.getContext('2d', { willReadFrequently: true });
+        t.fillStyle = '#fff'; t.fillRect(0, 0, 512, 512);
+        const scale = Math.min(480 / bitmap.width, 480 / bitmap.height);
+        const w = bitmap.width * scale, h = bitmap.height * scale;
+        const ox = Math.floor((512 - w) / 2), oy = Math.floor((512 - h) / 2);
+        t.drawImage(bitmap, ox, oy, w, h);
+
+        // 深底白字图片：先翻成白底黑字，后续统一按黑字处理。
+        // 不能用最外圈判断：有些样本本身是“黑底白字的小方块”，外面还有白边。
+        const im = t.getImageData(0, 0, 512, 512);
+        let sum = 0, n = 0;
+        for (let y = 8; y < 504; y += 8) {
+          for (let x = 8; x < 504; x += 8) {
+            const i = (y * 512 + x) * 4;
+            sum += (im.data[i] + im.data[i + 1] + im.data[i + 2]) / 3;
+            n++;
+          }
+        }
+        if (n && sum / n < 127) {
+          // 只翻图片区域，保留外面的白边；否则外框会被模型当成笔画
+          const x1 = Math.min(511, ox + Math.ceil(w));
+          const y1 = Math.min(511, oy + Math.ceil(h));
+          for (let y = oy; y < y1; y++) {
+            for (let x = ox; x < x1; x++) {
+              const i = (y * 512 + x) * 4;
+              im.data[i] = 255 - im.data[i];
+              im.data[i + 1] = 255 - im.data[i + 1];
+              im.data[i + 2] = 255 - im.data[i + 2];
+            }
+          }
+          t.putImageData(im, 0, 0);
+        }
+
+        fillWhite();
+        ctx.drawImage(tmp, 0, 0);
+        S.uploading = true;
+        S.strokes = [];
+        padTip.style.display = 'none';
+        hideResult();
+        toast('已载入图片，点击「识别」');
+      }
+
+      /* ---------------- 预处理 ---------------- */
+      function inkCanvas() {
+        const src = ctx.getImageData(0, 0, 512, 512);
+        const out = ctx.createImageData(512, 512);
+        for (let i = 0; i < src.data.length; i += 4) {
+          const g = 0.299 * src.data[i] + 0.587 * src.data[i + 1] + 0.114 * src.data[i + 2];
+          const v = Math.max(0, Math.min(255, 255 - g));
+          out.data[i] = out.data[i + 1] = out.data[i + 2] = v;
+          out.data[i + 3] = 255;
+        }
+        const c = document.createElement('canvas');
+        c.width = 512; c.height = 512;
+        c.getContext('2d').putImageData(out, 0, 0);
+        return c;
+      }
+
+      function bboxOf(c) {
+        const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let minX = c.width, minY = c.height, maxX = -1, maxY = -1;
+        for (let y = 0; y < c.height; y++) {
+          for (let x = 0; x < c.width; x++) {
+            if (d[(y * c.width + x) * 4] > 40) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        if (maxX < 0) return null;
+        return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+      }
+
+      function make64(base, bbox) {
+        const out = document.createElement('canvas');
+        out.width = 64; out.height = 64;
+        const o = out.getContext('2d', { willReadFrequently: true });
+        o.fillStyle = '#000'; o.fillRect(0, 0, 64, 64);
+        const scale = 62 / Math.max(bbox.w, bbox.h);
+        const dw = Math.max(1, Math.round(bbox.w * scale));
+        const dh = Math.max(1, Math.round(bbox.h * scale));
+        o.imageSmoothingEnabled = true;
+        o.imageSmoothingQuality = 'high';
+        o.drawImage(base, bbox.x, bbox.y, bbox.w, bbox.h,
+          Math.floor((64 - dw) / 2), Math.floor((64 - dh) / 2), dw, dh);
+        return out;
+      }
+
+      function make28(base, bbox) {
+        const out = document.createElement('canvas');
+        out.width = 28; out.height = 28;
+        const o = out.getContext('2d', { willReadFrequently: true });
+        o.fillStyle = '#000'; o.fillRect(0, 0, 28, 28);
+        const scale = 20 / Math.max(bbox.w, bbox.h);
+        const dw = Math.max(1, Math.round(bbox.w * scale));
+        const dh = Math.max(1, Math.round(bbox.h * scale));
+        o.imageSmoothingEnabled = true;
+        o.imageSmoothingQuality = 'high';
+        o.drawImage(base, bbox.x, bbox.y, bbox.w, bbox.h,
+          Math.floor((28 - dw) / 2), Math.floor((28 - dh) / 2), dw, dh);
+        return out;
+      }
+
+      function variants(base, size, angles, shifts) {
+        const list = [{ a: 0, dx: 0, dy: 0 }];
+        for (const a of angles) list.push({ a, dx: 0, dy: 0 });
+        for (const s of shifts) list.push({ a: 0, dx: s[0], dy: s[1] });
+        return list.map(v => {
+          const c = document.createElement('canvas');
+          c.width = size; c.height = size;
+          const x = c.getContext('2d', { willReadFrequently: true });
+          x.fillStyle = '#000'; x.fillRect(0, 0, size, size);
+          x.save();
+          x.translate(size / 2 + v.dx, size / 2 + v.dy);
+          x.rotate(v.a * Math.PI / 180);
+          x.drawImage(base, -size / 2, -size / 2);
+          x.restore();
+          return c;
+        });
+      }
+
+      function tensorFrom(canvases, size, channels) {
+        const n = canvases.length;
+        const data = new Float32Array(n * channels * size * size);
+        for (let k = 0; k < n; k++) {
+          const d = canvases[k].getContext('2d').getImageData(0, 0, size, size).data;
+          for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+              let v = d[(y * size + x) * 4] / 255;
+              if (channels === 3) v = (v - 0.5) / 0.5;
+              else v = (v - 0.1307) / 0.3081;
+              for (let c = 0; c < channels; c++) {
+                data[(k * channels + c) * size * size + y * size + x] = v;
+              }
+            }
+          }
+        }
+        return new ort.Tensor('float32', data, [n, channels, size, size]);
+      }
+
+      function softmax(arr) {
+        let max = -Infinity;
+        for (let i = 0; i < arr.length; i++) if (arr[i] > max) max = arr[i];
+        let sum = 0;
+        const out = new Float32Array(arr.length);
+        for (let i = 0; i < arr.length; i++) {
+          const v = Math.exp(arr[i] - max);
+          out[i] = v; sum += v;
+        }
+        for (let i = 0; i < out.length; i++) out[i] /= sum;
+        return out;
+      }
+
+      function topk(probs, k) {
+        const idx = Array.from({ length: probs.length }, (_, i) => i);
+        idx.sort((a, b) => probs[b] - probs[a]);
+        return idx.slice(0, k).map(i => ({ index: i, prob: probs[i] }));
+      }
+
+      /* ---------------- 加载模型 ---------------- */
+      function setStatus(text, kind, size) {
+        statusText.textContent = text;
+        statusBar.classList.toggle('ready', kind === 'ready');
+        statusBar.classList.toggle('error', kind === 'error');
+        if (size) $('#statusSize').textContent = size;
+      }
+
+      async function fetchWithProgress(url, onProgress) {
+        const res = await fetch(url, { cache: 'force-cache' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const total = Number(res.headers.get('content-length') || 0);
+        if (!res.body) {
+          const buf = await res.arrayBuffer();
+          onProgress(1);
+          return new Uint8Array(buf);
+        }
+        const reader = res.body.getReader();
+        const chunks = [];
+        let got = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value); got += value.length;
+          if (total) onProgress(got / total);
+        }
+        const out = new Uint8Array(got);
+        let off = 0;
+        for (const c of chunks) { out.set(c, off); off += c.length; }
+        onProgress(1);
+        return out;
+      }
+
+      async function loadCharset() {
+        const res = await fetch(CHARSET, { cache: 'force-cache' });
+        if (!res.ok) throw new Error('字符表 HTTP ' + res.status);
+        const data = await res.json();
+        S.chars = data.chars || [];
+      }
+
+      async function loadHanzi() {
+        if (S.hanziSession) return;
+        const bytes = await fetchWithProgress(MODEL_HANZI, p => {
+          const pct = Math.min(99, Math.round(p * 100));
+          setStatus(`正在加载本地模型 ${pct}%`, '', '5200 类');
+          loadBar.style.width = pct + '%';
+        });
+        S.hanziSession = await ort.InferenceSession.create(bytes, {
+          executionProviders: ['wasm'],
+          graphOptimizationLevel: 'all'
+        });
+      }
+
+      async function loadDigit() {
+        if (S.digitSession) return;
+        const bytes = await fetchWithProgress(MODEL_DIGIT, p => {
+          const pct = Math.min(99, Math.round(p * 100));
+          setStatus(`正在加载数字模型 ${pct}%`, '', '10 类');
+          loadBar.style.width = pct + '%';
+        });
+        S.digitSession = await ort.InferenceSession.create(bytes, {
+          executionProviders: ['wasm'],
+          graphOptimizationLevel: 'all'
+        });
+      }
+
+      async function boot() {
+        if (location.protocol === 'file:') {
+          setStatus('请通过 GitHub Pages 或本地 HTTP 打开', 'error');
+          loadTrack.classList.remove('show');
+          toast('file:// 下浏览器会拦截模型读取，请用 HTTP 打开');
+          return;
+        }
+        if (typeof ort === 'undefined') {
+          setStatus('ONNX Runtime 加载失败', 'error');
+          loadTrack.classList.remove('show');
+          toast('请检查网络后刷新；模型推理组件未能加载');
+          return;
+        }
+        try {
+          ort.env.wasm.numThreads = 1;
+          ort.env.wasm.simd = true;
+          ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
+          ort.env.logLevel = 'error';
+
+          S.loading = true;
+          setStatus('正在读取字符表…', '', '5200 类');
+          await loadCharset();
+          setStatus('正在加载本地模型 0%', '', '5200 类');
+          await loadHanzi();
+          setStatus('本地模型已就绪 · 仅推理', 'ready', '5200 类');
+          loadBar.style.width = '100%';
+          setTimeout(() => loadTrack.classList.remove('show'), 500);
+          S.ready = true;
+          recognizeBtn.disabled = false;
+          S.loading = false;
+        } catch (err) {
+          console.error(err);
+          setStatus('模型加载失败：' + (err.message || '未知错误'), 'error');
+          loadTrack.classList.remove('show');
+          S.loading = false;
+          toast('模型加载失败，请刷新或检查网络');
+        }
+      }
+
+      /* ---------------- 模式 ---------------- */
+      document.querySelectorAll('.mode-switch button').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const mode = btn.dataset.mode;
+          if (mode === S.mode) return;
+          S.mode = mode;
+          document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b === btn));
+          $('#resultMode').textContent = mode === 'hanzi' ? '汉字 · Top-5' : '数字 · Top-5';
+          padTip.textContent = mode === 'hanzi' ? '在这里写一个汉字' : '在这里写一个数字（0–9）';
+          S.strokes = [];
+          S.uploading = false;
+          redraw();
+          hideResult();
+          setStatus('本地模型已就绪 · 仅推理', 'ready', mode === 'hanzi' ? '5200 类' : '10 类');
+          if (mode === 'digit' && !S.digitSession) {
+            recognizeBtn.disabled = true;
+            try {
+              setStatus('正在加载数字模型…', '', '10 类');
+              await loadDigit();
+              setStatus('数字模型已就绪 · 仅推理', 'ready', '10 类');
+              recognizeBtn.disabled = false;
+            } catch (err) {
+              setStatus('数字模型加载失败', 'error');
+              toast('数字模型加载失败，请刷新');
+            }
+          }
+        });
+      });
+
+      /* ---------------- 识别 ---------------- */
+      function hideResult() {
+        resultEmpty.classList.remove('hide');
+        resultReal.classList.remove('show');
+      }
+
+      function showResult(char, conf, list, elapsed) {
+        resultEmpty.classList.add('hide');
+        resultReal.classList.add('show');
+        resultChar.textContent = char;
+        resultConf.textContent = (conf * 100).toFixed(1) + '%';
+        $('#resultTime').textContent = `${elapsed} ms · 本地 ONNX`;
+        candidates.innerHTML = list.map((it, i) => {
+          const c = S.mode === 'hanzi' ? (S.chars[it.index] || '?') : String(it.index);
+          return `<div class="candidate"><span class="c-char">${c}</span>
+            <span class="c-bar"><i style="width:${(it.prob * 100).toFixed(1)}%"></i></span>
+            <span class="c-pct">${(it.prob * 100).toFixed(1)}%</span></div>`;
+        }).join('');
+      }
+
+      async function recognize() {
+        if (!S.ready || S.busy) return;
+        const ink = inkCanvas();
+        const bbox = bboxOf(ink);
+        if (!bbox) { toast('画板是空的，先写一个字'); return; }
+        if (bbox.w < 2 || bbox.h < 2) { toast('笔画太小，写大一点'); return; }
+
+        S.busy = true;
+        recognizeBtn.disabled = true;
+        const t0 = performance.now();
+        try {
+          const isHanzi = S.mode === 'hanzi';
+          const base = isHanzi ? make64(ink, bbox) : make28(ink, bbox);
+          const list = isHanzi
+            ? variants(base, 64, [-4, 4], [[1.5, 0], [0, -1.5]])
+            : variants(base, 28, [-6, 6], []);
+          const input = tensorFrom(list, isHanzi ? 64 : 28, isHanzi ? 3 : 1);
+          const session = isHanzi ? S.hanziSession : S.digitSession;
+          const out = await session.run({ input });
+          const logits = out.logits.data;
+          const classes = isHanzi ? S.chars.length : 10;
+          const avg = new Float32Array(classes);
+          for (let k = 0; k < list.length; k++) {
+            const row = logits.subarray(k * classes, (k + 1) * classes);
+            const p = softmax(row);
+            for (let i = 0; i < classes; i++) avg[i] += p[i] / list.length;
+          }
+          const top = topk(avg, 5);
+          const best = top[0];
+          const char = isHanzi ? (S.chars[best.index] || '?') : String(best.index);
+          showResult(char, best.prob, top, Math.round(performance.now() - t0));
+        } catch (err) {
+          console.error(err);
+          toast('识别失败：' + (err.message || '未知错误'));
+        } finally {
+          S.busy = false;
+          recognizeBtn.disabled = false;
+        }
+      }
+
+      recognizeBtn.addEventListener('click', recognize);
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); recognize(); }
+      });
+
+      $('#year').textContent = new Date().getFullYear();
+      redraw();
+      boot();
+    })();
+  </script>
+</body>
+
+</html>

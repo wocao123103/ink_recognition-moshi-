@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="墨识：本地优先的手写汉字与数字识别工作台。5200 类汉字、数字串动态识别、20 张样本新增类别、网页内优化训练。">
   <meta name="theme-color" content="#f4faf7">
+  <link rel="icon" href="moshii/assets/moshi.ico">
   <title>墨识 · 本地手写识别</title>
   <style>
     /* ============================================================
@@ -444,6 +445,24 @@
       margin-bottom: 14px;
     }
 
+    .hero-download-note {
+      margin: -3px 0 14px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.7;
+    }
+
+    .hero-download-note b {
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 10.5px;
+    }
+
+    .hero-download-note a {
+      color: var(--teal-dark);
+      border-bottom: 1px solid rgba(11, 139, 130, .25);
+    }
+
     .hero-meta {
       display: flex;
       flex-wrap: wrap;
@@ -731,6 +750,66 @@
       white-space: nowrap;
     }
 
+    /* ---------------- 体验与下载 ---------------- */
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .access-card {
+      padding: 20px;
+    }
+
+    .access-card h3 {
+      margin: 12px 0 6px;
+      font-size: 18px;
+      line-height: 1.35;
+      letter-spacing: -.03em;
+      font-weight: 850;
+    }
+
+    .access-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.85;
+    }
+
+    .access-card .btn { margin-top: 14px; }
+
+    .access-list {
+      display: grid;
+      gap: 5px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+      color: var(--ink-soft);
+      font-size: 10px;
+      line-height: 1.7;
+    }
+
+    .access-list li:nth-child(n+3) { color: #967743; }
+
+    .access-code {
+      margin-top: 12px;
+      padding: 8px 10px;
+      border: 1px dashed #d8e9e2;
+      border-radius: 8px;
+      background: #f6fbf9;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .access-code code {
+      margin-left: 5px;
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
     /* ---------------- 快速开始 ---------------- */
     .start-grid {
       display: grid;
@@ -984,6 +1063,13 @@
       font-size: 8.5px;
     }
 
+    .quick-link .code-text {
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
     .status-list {
       display: flex;
       flex-direction: column;
@@ -1090,7 +1176,7 @@
       .hero-actions .btn { flex: 1; min-width: 140px; }
       .float-chip { display: none; }
       .stat-strip { grid-template-columns: repeat(2, 1fr); }
-      .feature-grid, .shots, .start-grid, .tech-grid { grid-template-columns: 1fr; }
+      .feature-grid, .shots, .start-grid, .tech-grid, .download-grid { grid-template-columns: 1fr; }
       .flow { grid-template-columns: 1fr; }
       .flow-step { border-right: 0; border-bottom: 1px solid var(--line); }
       .flow-step:last-child { border-bottom: 0; }
@@ -1124,6 +1210,7 @@
         <a href="#features">功能</a>
         <a href="#flow">链路</a>
         <a href="#screens">界面</a>
+        <a href="#download">下载</a>
         <a href="#start">开始</a>
         <a href="#tech">技术</a>
         <a href="#faq">问答</a>
@@ -1131,10 +1218,7 @@
 
       <div class="top-actions">
         <span class="run-pill"><i></i>本地运行 · 127.0.0.1</span>
-        <a class="btn btn-ghost" data-link="github" href="#">
-          GitHub 仓库
-          <span class="pending-badge">待上传</span>
-        </a>
+        <a class="btn btn-ghost" data-link="github" href="#">GitHub 仓库 ↗</a>
       </div>
     </header>
 
@@ -1147,6 +1231,7 @@
           <a href="#features"><i></i>核心功能</a>
           <a href="#flow"><i></i>完整链路</a>
           <a href="#screens"><i></i>界面截图</a>
+          <a href="#download"><i></i>体验与下载</a>
           <a href="#start"><i></i>三分钟开始</a>
           <a href="#tech"><i></i>技术栈</a>
           <a href="#faq"><i></i>常见问题</a>
@@ -1172,16 +1257,14 @@
             </p>
 
             <div class="hero-actions">
-              <a class="btn btn-primary" data-link="online" href="#">
-                在线体验
-                <span class="pending-badge">待上传</span>
-              </a>
-              <a class="btn btn-soft" data-link="release" href="#">
-                下载安装助手
-                <span class="pending-badge">待上传</span>
-              </a>
+              <a class="btn btn-primary" data-link="online" href="#">网页体验版 · 仅识别</a>
+              <a class="btn btn-soft" data-link="release" href="#">下载完整版安装助手</a>
               <a class="btn btn-ghost" href="#features">先看看功能 ↓</a>
             </div>
+            <p class="hero-download-note">
+              完整版 zip 在百度网盘 · 提取码 <b>8912</b> ·
+              <a data-link="release" href="#">打开网盘 ↗</a>
+            </p>
 
             <div class="hero-meta">
               <span><i></i>PySide6 桌面 + 本地 Web</span>
@@ -1342,6 +1425,46 @@
           </div>
         </section>
 
+        <!-- ---------- 体验与下载 ---------- -->
+        <section id="download">
+          <div class="section-head">
+            <span class="eyebrow">TRY OR INSTALL</span>
+            <h2>先在线试一笔，或者直接装完整版。</h2>
+            <p>网页体验版只保留本地模型推理；完整版才有训练、样本库、AI 复核和安装助手。</p>
+          </div>
+
+          <div class="download-grid">
+            <article class="card access-card">
+              <span class="badge">网页体验版</span>
+              <h3>只识别，不训练。</h3>
+              <p>在浏览器里加载打包时的 5200 类模型快照，适合快速试写。没有训练入口，不调用 AI API，也不能修改样本库。</p>
+              <ul class="access-list">
+                <li>✔ 本地 ONNX 推理，图片不上传</li>
+                <li>✔ 汉字 / 数字单字识别</li>
+                <li>✕ 不能新增类别、不能训练</li>
+                <li>✕ 不能配置 AI、不能改样本</li>
+              </ul>
+              <a class="btn btn-primary" data-link="online" href="#">打开 tiyanban.html ↗</a>
+            </article>
+
+            <article class="card access-card access-full">
+              <span class="badge amber">完整版</span>
+              <h3>墨识安装助手.zip</h3>
+              <p>包含 5200 类模型、1,694 张样本、PySide6 桌面壳、网页训练、新增类别、AI 桥接和调试台。</p>
+              <div class="access-code">
+                百度网盘提取码 <code>8912</code>
+              </div>
+              <ul class="access-list">
+                <li>✔ 网页内新增类别 / 20 张样本</li>
+                <li>✔ 优化训练、热加载、AI 复核</li>
+                <li>✔ 安装助手自动建目录、Conda 优先</li>
+                <li>✔ 本地服务 127.0.0.1:18620</li>
+              </ul>
+              <a class="btn btn-primary" data-link="release" href="#">打开百度网盘 ↗</a>
+            </article>
+          </div>
+        </section>
+
         <!-- ---------- 快速开始 ---------- -->
         <section id="start">
           <div class="section-head">
@@ -1478,9 +1601,10 @@
         <div class="panel">
           <div class="rail-title" style="margin-left:0">QUICK LINKS</div>
           <div class="quick-links">
-            <a class="quick-link" data-link="github" href="#">GitHub 仓库 <span class="pending-text">待上传</span></a>
-            <a class="quick-link" data-link="online" href="#">在线体验 <span class="pending-text">待上传</span></a>
-            <a class="quick-link" data-link="release" href="#">下载安装助手 <span class="pending-text">待上传</span></a>
+            <a class="quick-link" data-link="github" href="#">GitHub 仓库 <span>↗</span></a>
+            <a class="quick-link" href="https://wocao123103.github.io/ink_recognition-moshi/" target="_blank" rel="noopener noreferrer">GitHub Pages 首页 <span>↗</span></a>
+            <a class="quick-link" data-link="online" href="#">网页体验版 <span>↗</span></a>
+            <a class="quick-link" data-link="release" href="#">下载安装助手 <span class="code-text">8912</span></a>
             <a class="quick-link" href="#changelog">更新日志 <span>↗</span></a>
           </div>
         </div>
@@ -1530,18 +1654,18 @@
 
   <script>
     /* ============================================================
-       上传 GitHub 后，只改这里：
-       github   → 仓库主页
-       online   → GitHub Pages / 在线体验地址
-       release  → Releases 里的安装包下载地址
-       issues   → Issues 地址（可选）
-       留空时按钮保持“待上传”，点击只提示，不会跳转、不会执行任何危险操作。
+       这里集中管理页面的外部入口：
+       github   → GitHub 仓库
+       online   → tiyanban.html（网页体验版）
+       release  → 百度网盘安装包（提取码 8912）
+       issues   → Issues 地址
+       如果以后换地址，只改这四行即可；留空时按钮会保持“待上传”提示。
        ============================================================ */
     const LINKS = {
-      github: "",
-      online: "",
-      release: "",
-      issues: ""
+      github: "https://github.com/wocao123103/ink_recognition-moshi",
+      online: "tiyanban.html",
+      release: "https://pan.baidu.com/s/1Y4puuVb8J-xsr4F-bLqMDQ?pwd=8912",
+      issues: "https://github.com/wocao123103/ink_recognition-moshi/issues"
     };
 
     const LINK_LABELS = {

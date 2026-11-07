@@ -1,6 +1,7 @@
 # 墨识 · 手写与字体识别（本地部署版）
 
-> 项目介绍页（可直接作为 GitHub Pages 首页）：[index.html](index.html)
+> 项目介绍页（可直接作为 GitHub Pages 首页）：[index.html](index.html)  
+> GitHub Pages / 百度网盘 / 网页体验版说明：[README-GitHub.md](README-GitHub.md)
 
 一个完全在本机运行的汉字 / 数字识别与优化工具：
 **PySide6 桌面显示 + 本地 Web 服务 + 网页内样本管理与微调 + 多模型 AI 交叉复核**。
