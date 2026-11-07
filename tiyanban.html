@@ -623,7 +623,7 @@
       const candidates = $('#candidates');
       const padTip = $('#padTip');
 
-      const MODEL_HANZI = 'tiyanban_assets/moshi_hanzi_5k.onnx';
+      const MODEL_HANZI_PARTS = 'tiyanban_assets/moshi_hanzi_5k.parts.json';
       const MODEL_DIGIT = 'tiyanban_assets/moshi_digit.onnx';
       const CHARSET = 'tiyanban_assets/charset.json';
 
@@ -949,11 +949,37 @@
 
       async function loadHanzi() {
         if (S.hanziSession) return;
-        const bytes = await fetchWithProgress(MODEL_HANZI, p => {
-          const pct = Math.min(99, Math.round(p * 100));
-          setStatus(`正在加载本地模型 ${pct}%`, '', '5200 类');
-          loadBar.style.width = pct + '%';
-        });
+
+        // 模型按字节切成多个 <25MB 的分卷，浏览器按顺序拼接后再交给 ORT。
+        const mres = await fetch(MODEL_HANZI_PARTS, { cache: 'no-store' });
+        if (!mres.ok) throw new Error('模型清单 HTTP ' + mres.status);
+        const manifest = await mres.json();
+        if (!Array.isArray(manifest.parts) || !manifest.parts.length || !manifest.size) {
+          throw new Error('模型清单格式不正确');
+        }
+
+        const bytes = new Uint8Array(manifest.size);
+        let offset = 0;
+        for (const part of manifest.parts) {
+          const url = part.url || ('tiyanban_assets/' + part.name);
+          const chunk = await fetchWithProgress(url, p => {
+            const loaded = offset + p * part.size;
+            const pct = Math.min(99, Math.round(loaded / manifest.size * 100));
+            setStatus(`正在加载本地模型 ${pct}%`, '', '5200 类');
+            loadBar.style.width = pct + '%';
+          });
+          if (chunk.length !== part.size) {
+            throw new Error(`分卷 ${part.name} 大小不符`);
+          }
+          bytes.set(chunk, offset);
+          offset += chunk.length;
+          setStatus(`正在加载本地模型 ${Math.min(99, Math.round(offset / manifest.size * 100))}%`, '', '5200 类');
+          loadBar.style.width = Math.min(99, Math.round(offset / manifest.size * 100)) + '%';
+        }
+        if (offset !== manifest.size) {
+          throw new Error(`模型分卷总大小 ${offset} != ${manifest.size}`);
+        }
+
         S.hanziSession = await ort.InferenceSession.create(bytes, {
           executionProviders: ['wasm'],
           graphOptimizationLevel: 'all'

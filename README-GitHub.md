@@ -70,23 +70,27 @@ https://wocao123103.github.io/ink_recognition-moshi-/tiyanban.html
 ```text
 tiyanban.html
 tiyanban_assets/
-  ├─ moshi_hanzi_5k.onnx      # 约 35 MB，5200 类模型
-  ├─ moshi_digit.onnx         # 数字模型
-  └─ charset.json             # 5200 字字符表
+  ├─ moshi_hanzi_5k.parts.json   # 分卷清单
+  ├─ moshi_hanzi_5k.part00.bin   # 约 16.9 MB
+  ├─ moshi_hanzi_5k.part01.bin   # 约 16.9 MB
+  ├─ moshi_digit.onnx            # 数字模型
+  └─ charset.json                # 5200 字字符表
 ```
 
 请确保这些文件一起上传到 GitHub 仓库根目录，并且不要被 `.gitignore` 忽略。
 
-> `moshi_hanzi_5k.onnx` 约 **35 MB**。GitHub 网页端单文件上传有 25 MB 限制，请用 `git push`、GitHub Desktop 或 GitHub CLI 上传；不要用网页拖拽上传这个大文件。
+> 原始模型约 **35 MB**，已拆成两个约 **16.9 MB** 的分卷，每个都小于 GitHub 网页端 25 MB 的单文件限制。`parts.json` 记录顺序和总大小，`tiyanban.html` 会在浏览器里按顺序拼接成一个 `Uint8Array` 后再加载。
 >
-> 浏览器推理使用 ONNX Runtime Web（CDN 加载）。第一次打开需要下载约 35 MB 模型；之后由浏览器缓存。
+> 浏览器推理使用 ONNX Runtime Web（CDN 加载）。第一次打开需要下载约 35 MB（两个分卷）；之后由浏览器缓存。
 
 ### 上线检查清单
 
 - [ ] `index.html` 在仓库根目录；
 - [ ] `tiyanban.html` 在仓库根目录；
 - [ ] `tiyanban_assets/charset.json` 已上传；
-- [ ] `tiyanban_assets/moshi_hanzi_5k.onnx` 已上传；
+- [ ] `tiyanban_assets/moshi_hanzi_5k.parts.json` 已上传；
+- [ ] `tiyanban_assets/moshi_hanzi_5k.part00.bin` 已上传；
+- [ ] `tiyanban_assets/moshi_hanzi_5k.part01.bin` 已上传；
 - [ ] `tiyanban_assets/moshi_digit.onnx` 已上传；
 - [ ] Settings → Pages 已选择 `main` / `/ (root)`；
 - [ ] 首页返回 200，再点「网页体验版」能打开 `tiyanban.html`。

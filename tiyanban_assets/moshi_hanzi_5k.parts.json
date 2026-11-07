@@ -1,0 +1,16 @@
+{
+  "file": "moshi_hanzi_5k.onnx",
+  "size": 35513073,
+  "sha256": "c1bc04eedb9a56837c7a6ce7638bd6b3467635a1593a183e0dd7b804b55d37d5",
+  "parts": [
+    {
+      "name": "moshi_hanzi_5k.part00.bin",
+      "size": 17756537
+    },
+    {
+      "name": "moshi_hanzi_5k.part01.bin",
+      "size": 17756536
+    }
+  ],
+  "note": "分卷上传以避开 GitHub 25MB 单文件限制；浏览器按顺序拼接后加载。"
+}
